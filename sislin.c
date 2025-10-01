@@ -32,11 +32,15 @@ static inline real_t generateRandomB( unsigned int k )
 
 
 /* Cria matriz 'A' k-diagonal e Termos independentes B */
-void criaKDiagonal(int n, int k, real_t **A, real_t *B){
+void criaKDiagonal(int n, int k, real_t *A, real_t *B){
     for(int i = 0; i < n; i++){
         B[i] = generateRandomB(k);
-        for(int j =0; j < n; j++){
-            A[i][j] = generateRandomA(i,j,k);
+        for(int j = 0; j < n; j++){
+            if ((j > i+k/2)||(j < i-k/2)){
+                A[n*i+j] = 0.0;
+            }else {
+                A[n*i+j] = generateRandomA(i,j,k);
+            }
         }
     }
 }
@@ -87,13 +91,17 @@ real_t calcResiduoSL (real_t *A, real_t *b, real_t *X,
   *tempo = timestamp() - *tempo;
 }
 
-void prnsis(double **A, double *B, int n){
+void prnsis(double *A, double *B, int n){
     for (int i = 0; i < n; i++)
     {
         printf("  [  ");
-        for(int j = 0; j < n; j++)
-            printf("%.15e  ", A[i][j]);
-        printf("]  [ %.15e ]\n", B[i]);
+        for(int j = 0; j < n; j++){
+            if (A[i*n+j] == 0)
+                printf("            ");
+            else
+                printf("%.4e  ", A[i*n+j]);
+        }
+        printf("]  [ %.4e ]\n", B[i]);
     }
 }
 
