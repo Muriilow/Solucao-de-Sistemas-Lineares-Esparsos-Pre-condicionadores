@@ -1,14 +1,12 @@
-        CC = gcc
+CC = gcc
 
-    CFLAGS = -O0
-    LFLAGS = -lm
+CFLAGS = -O0
+LFLAGS = -lm
 
-      PROG = cgSolver
-      MODULES = utils \
-	        pcgc \
-                $(PROG)
-      OBJS = $(addsuffix .o,$(MODULES))
-      SRCS = $(addsuffix .c,$(MODULES)) $(addsuffix .h,$(MODULES))
+PROG = cgSolver
+MODULES = utils	pcgc sislin utils $(PROG)
+OBJS = $(addsuffix .o,$(MODULES))
+SRCS = $(addsuffix .c,$(MODULES)) $(addsuffix .h,$(MODULES))
 
 # Lista de arquivos para distribuição
 DISTFILES = *.c *.h Makefile LEIAME
