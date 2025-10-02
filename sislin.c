@@ -3,41 +3,43 @@
 #include <string.h>
 #include <math.h>
 
-#include "utils.h"
 #include "sislin.h"
 
 /* Cria matriz 'A' k-diagonal e Termos independentes B */
-void criaKDiagonal(int n, int k, double *A, double *B){
+void genKDiagonal(struct LinearSis *SL){
+    uint k = SL->k;
+    uint n = SL->n;
+
     for(int i = 0; i < n; i++){
-        B[i] = generateRandomB(k);
+        SL->b[i] = genRandomB(k);
 
         for(int j = 0; j < n; j++){
-            if ((j > i+k/2)||(j < i-k/2))
-                A[n*i+j] = 0.0;
-            else 
-                A[n*i+j] = generateRandomA(i,j,k);
+            if ((j != i+k/2 && j != i-k/2 && j != i)) {
+                SL->A[n*i+j] = 0.0;
+                continue;
+            }
+
+            SL->A[n*i+j] = genRandomA(i,j,k);
         }
     }
 }
 
 /* Gera matriz simetrica positiva */
-void genSimetricaPositiva(double *A, double *b, int n, int k, 
-        double **ASP, double **bsp, double *tempo)
+void genSymmetricPositive(double *A, double *b, int n, int k, double **ASP, double **bsp, double *time)
 {
-    *tempo = timestamp();
+    *time = timestamp();
 
-    *tempo = timestamp() - *tempo;
+    *time = timestamp() - *time;
 
 }
 
 
-void geraDLU (double *A, int n, int k,
-        double **D, double **L, double **U, double *tempo)
+void genDLU (double *A, int n, int k, double **D, double **L, double **U, double *time)
 {
-    *tempo = timestamp();
+    *time = timestamp();
 
 
-    *tempo = timestamp() - *tempo;
+    *time = timestamp() - *time;
 }
 
 /**
@@ -45,39 +47,49 @@ void geraDLU (double *A, int n, int k,
  *
  */
 void geraPreCond(double *D, double *L, double *U, double w, int n, int k,
-        double **M, double *tempo)
+        double **M, double *time)
 {
-    *tempo = timestamp();
+    *time = timestamp();
 
 
-    *tempo = timestamp() - *tempo;
+    *time = timestamp() - *time;
 }
 
 
-double calcResiduoSL (double *A, double *b, double *X,
-        int n, int k, double *tempo)
+double calcResidue(struct LinearSis *SL, double *X, double *time)
 {
-    *tempo = timestamp();
-
+    uint n = SL->n;
+    *time = timestamp();
+    double sum = 0;
     double *r = calloc(n, sizeof(double));
-    /*for (int i; i< ;) {
-    }*/
+
+    for (uint i = 0; i < n; i++) {
+        for (uint j = 0; j < n; j++)
+            sum += SL->A[n*i + j] * X[j];
+    
+        r[i] = SL->b[i] - sum;
+        printf("%f\n", r[i]);
+    }
 
 
-    *tempo = timestamp() - *tempo;
+    *time = timestamp() - *time;
+
+    return 0.0;
 }
 
-void prnsis(double *A, double *B, int n){
+void printSis(struct LinearSis *SL){
+    uint n = SL->n;
+
     for (int i = 0; i < n; i++)
     {
         printf("  [  ");
         for(int j = 0; j < n; j++){
-            if (A[i*n+j] == 0)
+            if (SL->A[i*n+j] == 0)
                 printf("            ");
             else
-                printf("%.4e  ", A[i*n+j]);
+                printf("%.4e  ", SL->A[i*n+j]);
         }
-        printf("]  [ %.4e ]\n", B[i]);
+        printf("]  [ %.4e ]\n", SL->b[i]);
     }
 }
 

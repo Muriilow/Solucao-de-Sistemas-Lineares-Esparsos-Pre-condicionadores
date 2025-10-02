@@ -7,15 +7,19 @@
 #include "sislin.h"
 
 int main(){
+    srandom(20252);
     int n=10;
     int k=3;
     double* A = (double*) malloc(n*n*sizeof(double));
-    double* B = (double*) malloc(n*sizeof(double));
+    double* b = (double*) malloc(n*sizeof(double));
+    double* X = (double*) calloc(n, sizeof(double));
+    struct LinearSis SL = {A, b, n, k};
+    double time = timestamp();
 
-    srandom(20252);
-    criaKDiagonal(n,k,A,B);
+    genKDiagonal(&SL);
 
-    prnsis(A,B,n);
+    printSis(&SL);
 
+    calcResidue(&SL, X, &time); 
     return 0; 
 }
