@@ -8,6 +8,28 @@
 
 #include "utils.h"
 
+
+/**
+ * Função que gera os coeficientes de um sistema linear k-diagonal
+ * @param i,j coordenadas do elemento a ser calculado (0<=i,j<n)
+ * @param k numero de diagonais da matriz A
+ */
+static inline double generateRandomA( unsigned int i, unsigned int j, unsigned int k )
+{
+  static double invRandMax = 1.0 / (double)RAND_MAX;
+  return ( (i==j) ? (double)(k<<1) : 1.0 )  * (double)random() * invRandMax;
+};
+
+/**
+ * Função que gera os termos independentes de um sistema linear k-diagonal
+ * @param k numero de diagonais da matriz A
+ */
+static inline double generateRandomB( unsigned int k )
+{
+  static double invRandMax = 1.0 / (double)RAND_MAX;
+  return (double)(k<<2) * (double)random() * invRandMax;
+};
+
 void criaKDiagonal(int n, int k, double *A, double *B);
 
 void genSimetricaPositiva(double *A, double *b, int n, int k, double **ASP, double **bsp, double *tempo);

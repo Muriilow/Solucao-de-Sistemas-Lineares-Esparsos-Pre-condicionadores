@@ -6,7 +6,7 @@
 #include "utils.h"
 #include "sislin.h"
 
-void main(){
+int main(){
     int n=10;
     int k=3;
     double* A = (double*) malloc(n*n*sizeof(double));
@@ -16,4 +16,6 @@ void main(){
     criaKDiagonal(n,k,A,B);
 
     prnsis(A,B,n);
+
+    return 0; 
 }

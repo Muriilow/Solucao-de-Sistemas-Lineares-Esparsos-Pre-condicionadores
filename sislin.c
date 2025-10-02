@@ -6,89 +6,65 @@
 #include "utils.h"
 #include "sislin.h"
 
-static inline real_t generateRandomA( unsigned int i, unsigned int j, unsigned int k );
-static inline real_t generateRandomB( unsigned int k );
-
-/**
- * Função que gera os coeficientes de um sistema linear k-diagonal
- * @param i,j coordenadas do elemento a ser calculado (0<=i,j<n)
- * @param k numero de diagonais da matriz A
- */
-static inline real_t generateRandomA( unsigned int i, unsigned int j, unsigned int k )
-{
-  static real_t invRandMax = 1.0 / (real_t)RAND_MAX;
-  return ( (i==j) ? (real_t)(k<<1) : 1.0 )  * (real_t)random() * invRandMax;
-}
-
-/**
- * Função que gera os termos independentes de um sistema linear k-diagonal
- * @param k numero de diagonais da matriz A
- */
-static inline real_t generateRandomB( unsigned int k )
-{
-  static real_t invRandMax = 1.0 / (real_t)RAND_MAX;
-  return (real_t)(k<<2) * (real_t)random() * invRandMax;
-}
-
-
 /* Cria matriz 'A' k-diagonal e Termos independentes B */
-void criaKDiagonal(int n, int k, real_t *A, real_t *B){
+void criaKDiagonal(int n, int k, double *A, double *B){
     for(int i = 0; i < n; i++){
         B[i] = generateRandomB(k);
+
         for(int j = 0; j < n; j++){
-            if ((j > i+k/2)||(j < i-k/2)){
+            if ((j > i+k/2)||(j < i-k/2))
                 A[n*i+j] = 0.0;
-            }else {
+            else 
                 A[n*i+j] = generateRandomA(i,j,k);
-            }
         }
     }
 }
 
 /* Gera matriz simetrica positiva */
-void genSimetricaPositiva(real_t *A, real_t *b, int n, int k, 
-			  real_t **ASP, real_t **bsp, rtime_t *tempo)
+void genSimetricaPositiva(double *A, double *b, int n, int k, 
+        double **ASP, double **bsp, double *tempo)
 {
-  *tempo = timestamp();
+    *tempo = timestamp();
 
-  *tempo = timestamp() - *tempo;
- 
+    *tempo = timestamp() - *tempo;
+
 }
 
 
-void geraDLU (real_t *A, int n, int k,
-	      real_t **D, real_t **L, real_t **U, rtime_t *tempo)
+void geraDLU (double *A, int n, int k,
+        double **D, double **L, double **U, double *tempo)
 {
-  *tempo = timestamp();
+    *tempo = timestamp();
 
 
-  *tempo = timestamp() - *tempo;
+    *tempo = timestamp() - *tempo;
 }
 
 /**
  * Devolve matriz M⁻¹
  *
  */
-void geraPreCond(real_t *D, real_t *L, real_t *U, real_t w, int n, int k,
-		 real_t **M, rtime_t *tempo)
+void geraPreCond(double *D, double *L, double *U, double w, int n, int k,
+        double **M, double *tempo)
 {
-  *tempo = timestamp();
+    *tempo = timestamp();
 
 
-  *tempo = timestamp() - *tempo;
+    *tempo = timestamp() - *tempo;
 }
 
 
-real_t calcResiduoSL (real_t *A, real_t *b, real_t *X,
-		      int n, int k, rtime_t *tempo)
+double calcResiduoSL (double *A, double *b, double *X,
+        int n, int k, double *tempo)
 {
-  *tempo = timestamp();
+    *tempo = timestamp();
 
-  real_t *r = calloc(n, sizeof(real_t));
+    double *r = calloc(n, sizeof(double));
+    /*for (int i; i< ;) {
+    }*/
 
-  
 
-  *tempo = timestamp() - *tempo;
+    *tempo = timestamp() - *tempo;
 }
 
 void prnsis(double *A, double *B, int n){
