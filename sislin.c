@@ -14,13 +14,7 @@ void genKDiagonal(struct LinearSis *SL){
         SL->b[i] = genRandomB(k);
 
         for(int j = 0; j < n; j++){
-            if ((j > (i+ (int) k/2)) || (j < (i - (int) k/2))) {
-                if (i==0){
-                    if(j>(i+k/2))
-                            printf("%d > %d\n",j , i+(int)k/2);
-                    if(j<i-k/2)
-                            printf("%d < %d\n",j,i-k/2);
-                }
+            if ((j > i+k/2 || j < i - k/2)) {
                 SL->A[n*i+j] = 0.0;
                 continue;
             }
@@ -60,6 +54,22 @@ void geraPreCond(double *D, double *L, double *U, double w, int n, int k,
     *time = timestamp() - *time;
 }
 
+
+void genTranspose(struct LinearSis *SL, struct LinearSis* SLT)
+{
+    uint n = SL->n;
+
+    for (uint i = 0; i < n; i++)
+        for(uint j = 0; j < n; j++)
+            SLT->A[j*n+i] = SL->A[i*n+j];
+}
+double norma(double* x, uint n){
+    double norma = 0;
+    for (uint i = 0; i < n; i++){
+        norma += x[i]*x[i];
+    }
+    return sqrt(norma);
+}
 
 double calcResidue(struct LinearSis *SL, double *X, double *time)
 {

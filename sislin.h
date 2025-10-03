@@ -36,6 +36,7 @@ void genKDiagonal(struct LinearSis *SL);
 void genSymmetricPositive(double *A, double *b, int n, int k, double **ASP, double **bsp, double *time);
 void genDLU(double *A, int n, int k, double **D, double **L, double **U, double *time);
 void genPreCond(double *D, double *L, double *U, double w, int n, int k, double **M, double *time);
+void genTranspose(struct LinearSis *SL, struct LinearSis *SLT);
 double calcResidue(struct LinearSis *SL, double *X, double *time);
 void printSis(struct LinearSis *SL);
 
