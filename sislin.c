@@ -14,7 +14,13 @@ void genKDiagonal(struct LinearSis *SL){
         SL->b[i] = genRandomB(k);
 
         for(int j = 0; j < n; j++){
-            if ((j != i+k/2 && j != i-k/2 && j != i)) {
+            if ((j > (i+ (int) k/2)) || (j < (i - (int) k/2))) {
+                if (i==0){
+                    if(j>(i+k/2))
+                            printf("%d > %d\n",j , i+(int)k/2);
+                    if(j<i-k/2)
+                            printf("%d < %d\n",j,i-k/2);
+                }
                 SL->A[n*i+j] = 0.0;
                 continue;
             }
@@ -28,7 +34,6 @@ void genKDiagonal(struct LinearSis *SL){
 void genSymmetricPositive(double *A, double *b, int n, int k, double **ASP, double **bsp, double *time)
 {
     *time = timestamp();
-
     *time = timestamp() - *time;
 
 }
