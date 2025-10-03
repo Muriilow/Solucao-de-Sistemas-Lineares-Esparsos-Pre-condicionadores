@@ -63,7 +63,13 @@ void genTranspose(struct LinearSis *SL, struct LinearSis* SLT)
         for(uint j = 0; j < n; j++)
             SLT->A[j*n+i] = SL->A[i*n+j];
 }
-double norma(double* x, uint n){
+
+void conjGradient(struct LinearSis *SL, double *X, double *R, uint maxit, double eps){
+    
+
+}
+
+double static norma(double* x, uint n){
     double norma = 0;
     for (uint i = 0; i < n; i++){
         norma += x[i]*x[i];
