@@ -37,8 +37,8 @@ void genSymmetricPositive(double *A, double *b, int n, int k, double **ASP, doub
 void genDLU(double *A, int n, int k, double **D, double **L, double **U, double *time);
 void genPreCond(double *D, double *L, double *U, double w, int n, int k, double **M, double *time);
 void genTranspose(struct LinearSis *SL, struct LinearSis *SLT);
-void conjGradient(struct LinearSis *SL, double *X, double *R, uint maxit, double eps);
-double calcResidue(struct LinearSis *SL, double *X, double *time);
+void conjGradient(struct LinearSis *SL, double *x, double *r, uint maxit, double eps);
+void calcResidue(struct LinearSis *SL, double *x, double *r);
 void printSis(struct LinearSis *SL);
 
 #endif // __SISLIN_H__

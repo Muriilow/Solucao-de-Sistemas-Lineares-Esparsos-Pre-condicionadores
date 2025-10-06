@@ -20,6 +20,5 @@ int main(){
 
     printSis(&SL);
 
-    calcResidue(&SL, X, &time); 
     return 0; 
 }

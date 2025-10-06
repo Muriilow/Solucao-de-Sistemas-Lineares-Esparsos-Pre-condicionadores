@@ -5,6 +5,7 @@
 #include <time.h>
 #include <sys/time.h>
 
+#define uint unsigned int 
 /*
  * Struct que define um sistema Linear
  * A: Matriz k-diagonal 
@@ -15,12 +16,19 @@
 struct LinearSis {
     double *A;
     double *b;
-    unsigned int n; 
-    unsigned int k; 
+    uint n; 
+    uint k; 
+};
+
+struct Matrix {
+    double *v;
+    uint row; /*Quantidades de linhas e coluna*/
+    uint column;
+    uint rowSize;
+    uint columnSize;
 };
 // Valor absoluto de um número. Alternativa ao uso da função 'fabs()'
 #define ABS(num)  ((num) < 0.0 ? -(num) : (num))
-#define uint unsigned int 
 // Número máximo de dígitos em um número
 #define numDigits(n)  6  // ( (int) log10(n) + 1 )
 
