@@ -40,6 +40,7 @@ void genTranspose(struct LinearSis *SL, struct LinearSis *SLT);
 void conjGradient(struct LinearSis *SL, double *x, double *r, uint maxit, double eps);
 void calcResidue(struct LinearSis *SL, double *x, double *r);
 void printSis(struct LinearSis *SL);
+void multMatrix(struct Matrix *A, struct Matrix *B, struct Matrix *C);
 
 #endif // __SISLIN_H__
 

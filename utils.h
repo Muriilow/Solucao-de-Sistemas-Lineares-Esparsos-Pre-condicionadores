@@ -5,7 +5,13 @@
 #include <time.h>
 #include <sys/time.h>
 
-#define uint unsigned int 
+#define uint unsigned int
+
+struct Matrix {
+    double *v;
+    uint row; /*Quantidades de linhas e coluna*/
+    uint column;
+};
 /*
  * Struct que define um sistema Linear
  * A: Matriz k-diagonal 
@@ -14,19 +20,12 @@
  * k: Valor que define quantas diagonais não zero
  * */
 struct LinearSis {
-    double *A;
-    double *b;
+    struct Matrix *A;
+    struct Matrix *b;
     uint n; 
     uint k; 
 };
 
-struct Matrix {
-    double *v;
-    uint row; /*Quantidades de linhas e coluna*/
-    uint column;
-    uint rowSize;
-    uint columnSize;
-};
 // Valor absoluto de um número. Alternativa ao uso da função 'fabs()'
 #define ABS(num)  ((num) < 0.0 ? -(num) : (num))
 // Número máximo de dígitos em um número
