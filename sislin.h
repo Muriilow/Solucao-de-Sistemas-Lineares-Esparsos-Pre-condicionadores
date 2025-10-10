@@ -35,9 +35,10 @@ void genKDiagonal(struct LinearSis *SL);
 
 void genSymmetricPositive(double *A, double *b, int n, int k, double **ASP, double **bsp, double *time);
 void genDLU(struct Matrix* A, struct Matrix* D, struct Matrix* L, struct Matrix* U, double *time);
-void genPreCond(double *D, double *L, double *U, double w, int n, int k, double *M, double *time);
+void genPreCond(struct Matrix *A, double w, int n, int k, struct Matrix *M, double *time);
 void genTranspose(struct LinearSis *SL, struct LinearSis *SLT);
 void conjGradient(struct LinearSis *SL, double *x, double *r, uint maxit, double eps);
+void conjGradientPre(struct LinearSis *SL, double *x, double *r, struct Matrix *M, uint maxit, double eps);
 void calcResidue(struct LinearSis *SL, double *x, double *r);
 void printVetor(double* vet, int n);
 void printSis(struct LinearSis *SL);

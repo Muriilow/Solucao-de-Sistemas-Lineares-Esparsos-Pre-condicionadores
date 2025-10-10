@@ -8,27 +8,47 @@
 
 int main(){
     srandom(20252);
-    int n=5;
-    int k=3;
-    uint maxit = 100;
-    double eps = 1e-6;
+    int n;
+    int k;
+    uint maxit;
+    float w;
+    double eps;
 
-    double a1[25] = {2,1,0,0,0, 1,2,1,0,0, 0,1,2,1,0, 0,0,1,2,1, 0,0,0,1,2};
+    scanf("%d", &n);
+    scanf("%d", &k);
+    scanf("%f", &w);
+    scanf("%d", &maxit);
+    scanf("%lf", &eps);
+
+    double *a1 = malloc(n*n*sizeof(double));
     struct Matrix A = {a1, n, n, k};
 
-    double b1[5] = {2,3,5,7,11};
+    double *b1 = malloc(n*sizeof(double));
     struct Matrix b = {b1, n, 1, 0};
 
     struct LinearSis SL = {&A, &b, n, k};
+    genKDiagonal(&SL);
+
+    printSis(&SL);
     double* X = (double*) calloc(n, sizeof(double));
     double* r = (double*) malloc(n * sizeof(double));
     double time = timestamp();
 
-    
-    conjGradient(&SL, X, r, maxit, eps);
-    printSis(&SL);
+    if(w == -1) { 
+        conjGradient(&SL, X, r, maxit, eps);
+    }
+    else if(w == 0){
+        double time; 
+        double *Mv = calloc(n, sizeof(double));
+        struct Matrix M = {Mv, n, 1, SL.k};
+        genPreCond(SL.A, w, SL.n, SL.k, &M, &time);
+        conjGradientPre(&SL, X, r, &M, maxit, eps);
+        free(Mv);
+    }
 
     free(X);
+    free(a1);
+    free(b1);
     free(r);
     return 0;
     

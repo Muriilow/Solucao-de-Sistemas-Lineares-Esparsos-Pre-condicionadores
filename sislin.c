@@ -6,10 +6,10 @@
 #include "sislin.h"
 
 
-static double sqrVector(double* x, uint n){
+static double sqrVector(double* x, double* y, uint n){
     double sqrVector = 0;
     for (uint i = 0; i < n; i++){
-        sqrVector += x[i]*x[i];
+        sqrVector += x[i]*y[i];
     }
     return sqrVector;
 }
@@ -66,9 +66,12 @@ void genDLU(struct Matrix* A, struct Matrix* D, struct Matrix* L, struct Matrix*
  * Devolve matriz M⁻¹
  *
  */
-void geraPreCond(struct Matrix *A, double w, int n, int k,
+void genPreCond(struct Matrix *A, double w, int n, int k,
         struct Matrix *M, double *time)
 {   
+    if (w == -1)
+        return;
+
     double* dv = calloc(A->row*A->column, sizeof(double));
     double* lv = calloc(A->row*A->column, sizeof(double));
     double* uv = calloc(A->row*A->column, sizeof(double));
@@ -77,23 +80,18 @@ void geraPreCond(struct Matrix *A, double w, int n, int k,
     struct Matrix U = {uv, A->row, A->column, A->k};
     double *DLUTime;
 
-    genDLU(A,&D,&L,&U,DLUTime);
+    //genDLU(A,&D,&L,&U,DLUTime); TODO: Consertar o ERRO 
 
     *time = timestamp();
-    if(w == -1){
-        ;
-    } else if (w == 0){
-        *M = D;
-        for(int i = 0; i < M->row; i++)
-            M->v[(M->row+1)*i] = 1.0/M->v[(M->row+1)*i];
+    if (w == 0){
+        for(int i = 0; i < M->row; i++){
+            M->v[i] = 1.0/A->v[i*n + i];
+        }
     } else if (w == 1){
-        ;
+        ; //placeholder
     } else if (w > 1 && w < 2){
-        ;
-    } else {
-        printf("Precondicionador inválido");
+        ; //placeholder
     }
-
 
     *time = timestamp() - *time;
 }
@@ -110,6 +108,141 @@ void genTranspose(struct LinearSis *SL, struct LinearSis* SLT)
             SLT->A[j*n+i] = SL->A[i*n+j];
 }
 
+void conjGradientPre(struct LinearSis *SL, double *x, double *r, struct Matrix *M, uint maxit, double eps){
+
+    double time;
+    calcResidue(SL, x, r);
+    uint n = SL->n;
+    
+    double *Yv = malloc(n * sizeof(double)); // Y para calcular o SL com condicionador
+    struct Matrix y = {Yv, 1, SL->n, 0};
+    struct Matrix rMatrix = {r, 1, SL->n, 0};
+    for (int i = 0; i < n; i++) {
+        y.v[i] = M->v[i] * r[i];
+        printf("%lf - %lf - %lf\n", y.v[i], M->v[i], r[i]);
+    }
+    //multMatrix(M, &rMatrix, &y); // y = M-1 * r
+
+    /*Criando a matriz d e c usados para calculos*/
+    double *v1 = calloc(n,sizeof(double));
+    struct Matrix d = {v1, n, 1, 0};
+    for (int i = 0; i < n; i++) {
+        d.v[i] = M->v[i] * SL->b->v[i];
+        printf("%lf - %lf - %lf\n", d.v[i], M->v[i], SL->b->v[i]);
+    }
+    multMatrix(M, SL->b, &d); // v = M-1 * b
+
+    double *v2 = malloc(n * sizeof(double));
+    struct Matrix c = {v2, n, 1, 0};
+
+    double cAd = 0.0; //dkt * Adk
+    double alpha; // ak
+    double deltaOld = 0.0;
+    double deltaNew = 0.0;
+    double valueNew = 0.0;
+    double beta = 0.0;
+    double tIter = timestamp();
+    uint it = 1;
+    deltaOld = sqrVector(r, y.v, n); //Como rk * rkt eh o quadrado nao precisamos multplicar matrizes
+    do {
+        /*Calculando ak = rk * rkt / dkt * A * dk */
+        multMatrix(SL->A, &d, &c); //Precisamos multiplicar matrizes pois A e d nao sao quadrados
+       
+        //Fazemos a multiplicacao de matrizes manual, ja q n vou criar outro vetor
+        cAd = 0.0;
+        for (int i = 0; i < n; i++) 
+            cAd += c.v[i]*d.v[i];
+
+        alpha = deltaOld / cAd; //Calculando ak
+         
+        //printf("%f\n", alpha);
+       
+        deltaNew = 0.0;
+        for (uint i = 0; i < n; i++) {
+            /*Xk+1 = Xk + akdk*/
+            x[i] += alpha * d.v[i];
+            
+            //printf("%f - %d\n", x[i], i);
+            /*rk+1 = rk - akAdk*/
+            r[i] -= alpha * c.v[i];
+
+            deltaNew += y.v[i] * r[i];
+            valueNew += r[i] * r[i];
+        }
+
+        beta = deltaNew / deltaOld;
+        for(uint i = 0; i < n; i++)
+            d.v[i] = r[i] + beta *d.v[i];
+
+        deltaOld = deltaNew;
+        it++;
+        tIter -= timestamp();
+    }while (it < maxit && sqrt(valueNew) >= eps);
+
+    printVetor(x, n);
+    printVetor(r, n);
+    
+    printf("%f - %f\n", deltaOld, cAd);
+    free(v1);
+    free(v2);
+}
+
+void calcResidue(struct LinearSis *SL, double *x, double *r)
+{
+    uint n = SL->n;
+    double sum = 0;
+
+    for (uint i = 0; i < n; i++) {
+        for (uint j = 0; j < n; j++)
+            sum += SL->A->v[n*i + j] * x[j];
+    
+        r[i] = SL->b->v[i] - sum;
+        //printf("%f\n", r[i]);
+    }
+}
+
+void printVetor(double* vet, int n){
+    for(int i = 0; i < n; i++){
+        printf("%.16g   ", vet[i]);
+    }
+    printf("\n");
+}
+void printSis(struct LinearSis *SL){
+    uint n = SL->n;
+
+    for (int i = 0; i < n; i++)
+    {
+        printf("  [  ");
+        for(int j = 0; j < n; j++){
+            if (SL->A->v[i*n+j] == 0)
+                printf("            ");
+            else
+                printf("%.4e  ", SL->A->v[i*n+j]);
+        }
+        printf("]  [ %.4e ]\n", SL->b->v[i]);
+    }
+}
+
+void multMatrix(struct Matrix *A, struct Matrix *B, struct Matrix *C) {
+    if(A->column != B->row)
+        return; 
+
+    double sum = 0.0;
+    uint aSize = A->column;
+    uint bSize = B->column;
+
+        for (uint i = 0; i < A->row; i++) {
+            for (uint j = 0; j < B->column ; j++) {
+                sum = 0.0;
+                for (uint k = 0; k < A->column; k++)
+                    sum += A->v[i*aSize + k] * B->v[k*bSize + j];
+
+                C->v[i*bSize + j] = sum;
+                //printf("%f - C[%d]\n", C->v[i*bSize + j], i*bSize + j);
+
+            }
+        }
+}
 void conjGradient(struct LinearSis *SL, double *x, double *r, uint maxit, double eps){
     calcResidue(SL, x, r);
 
@@ -130,7 +263,7 @@ void conjGradient(struct LinearSis *SL, double *x, double *r, uint maxit, double
     double beta = 0.0;
     double tIter = timestamp();
     uint it = 1;
-    deltaOld = sqrVector(r,n); //Como rk * rkt eh o quadrado nao precisamos multplicar matrizes
+    deltaOld = sqrVector(r, r, n); //Como rk * rkt eh o quadrado nao precisamos multplicar matrizes
     do {
         /*Calculando ak = rk * rkt / dkt * A * dk */
         multMatrix(SL->A, &d, &c); //Precisamos multiplicar matrizes pois A e d nao sao quadrados
@@ -164,73 +297,11 @@ void conjGradient(struct LinearSis *SL, double *x, double *r, uint maxit, double
         tIter -= timestamp();
     }while (it < maxit && sqrt(deltaNew) >= eps);
 
-    printf("%d\n", n);
     printVetor(x, n);
-    
-    //printf("%f - %f\n", deltaOld, cAd);
     printVetor(r, n);
-
-
-    printf("%.8g", tIter);
+    
+    printf("%f - %f\n", deltaOld, cAd);
 
     free(v1);
     free(v2);
 }
-
-void calcResidue(struct LinearSis *SL, double *x, double *r)
-{
-    uint n = SL->n;
-    double sum = 0;
-
-    for (uint i = 0; i < n; i++) {
-        for (uint j = 0; j < n; j++)
-            sum += SL->A->v[n*i + j] * x[j];
-    
-        r[i] = SL->b->v[i] - sum;
-        //printf("%f\n", r[i]);
-    }
-}
-
-void printVetor(double* vet, int n){
-for(int i = 0; i < n; i++){
-    printf("%.16g   ", vet[i]);
-}
-printf("\n");
-}
-void printSis(struct LinearSis *SL){
-    uint n = SL->n;
-
-    for (int i = 0; i < n; i++)
-    {
-        printf("  [  ");
-        for(int j = 0; j < n; j++){
-            if (SL->A->v[i*n+j] == 0)
-                printf("            ");
-            else
-                printf("%.4e  ", SL->A->v[i*n+j]);
-        }
-        printf("]  [ %.4e ]\n", SL->b->v[i]);
-    }
-}
-
-void multMatrix(struct Matrix *A, struct Matrix *B, struct Matrix *C) {
-    if(A->column != B->row)
-        return; 
-
-    double sum = 0.0;
-    uint aSize = A->column;
-uint bSize = B->column;
-
-        for (uint i = 0; i < A->row; i++) {
-            for (uint j = 0; j < B->column ; j++) {
-                sum = 0.0;
-                for (uint k = 0; k < A->column; k++)
-                    sum += A->v[i*aSize + k] * B->v[k*bSize + j];
-
-                C->v[i*bSize + j] = sum;
-                //printf("%f - C[%d]\n", C->v[i*bSize + j], i*bSize + j);
-
-            }
-        }
-}
-
