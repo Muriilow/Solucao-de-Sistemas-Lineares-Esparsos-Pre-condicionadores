@@ -1,6 +1,6 @@
 CC = gcc
 
-CFLAGS = -O0
+CFLAGS = -O0 
 LFLAGS = -lm
 
 PROG = cgSolver
@@ -15,10 +15,10 @@ DISTDIR = login1-login2
 .PHONY: clean purge dist all
 
 %.o: %.c %.h utils.h
-	$(CC) -c $(CFLAGS) $<
+	$(CC) -g -c $(CFLAGS) $<
 
 $(PROG):  $(OBJS)
-	$(CC) -o $@ $^ $(LFLAGS)
+	$(CC) -g -o $@ $^ $(LFLAGS)
 
 debug:   CFLAGS+=-D__DEBUG__
 debug: $(PROG)

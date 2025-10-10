@@ -41,9 +41,22 @@ void genSymmetricPositive(double *A, double *b, int n, int k, double **ASP, doub
 }
 
 
-void genDLU (double *A, int n, int k, double **D, double **L, double **U, double *time)
+void genDLU(struct Matrix* A, struct Matrix* D, struct Matrix* L, struct Matrix* U, double *time)
 {
+    int n = A->row;
+    int k = A->k;
     *time = timestamp();
+
+    for(int i = 0; i < n; i++){
+        for(int j = i-k/2; j < i+k/2; j++){
+            if(i < j)
+                L->v[i*n+j] = A->v[i*n+j];
+            else if(i == j)
+                D->v[i*n+j] = A->v[i*n+j];
+            else
+                U->v[i*n+j] = A->v[i*n+j];
+        }
+    }
 
 
     *time = timestamp() - *time;
@@ -53,15 +66,40 @@ void genDLU (double *A, int n, int k, double **D, double **L, double **U, double
  * Devolve matriz M⁻¹
  *
  */
-void geraPreCond(double *D, double *L, double *U, double w, int n, int k,
-        double **M, double *time)
-{
+void geraPreCond(struct Matrix *A, double w, int n, int k,
+        struct Matrix *M, double *time)
+{   
+    double* dv = calloc(A->row*A->column, sizeof(double));
+    double* lv = calloc(A->row*A->column, sizeof(double));
+    double* uv = calloc(A->row*A->column, sizeof(double));
+    struct Matrix D = {dv, A->row, A->column, A->k};
+    struct Matrix L = {lv, A->row, A->column, A->k};
+    struct Matrix U = {uv, A->row, A->column, A->k};
+    double *DLUTime;
+
+    genDLU(A,&D,&L,&U,DLUTime);
+
     *time = timestamp();
+    if(w == -1){
+        ;
+    } else if (w == 0){
+        *M = D;
+        for(int i = 0; i < M->row; i++)
+            M->v[(M->row+1)*i] = 1.0/M->v[(M->row+1)*i];
+    } else if (w == 1){
+        ;
+    } else if (w > 1 && w < 2){
+        ;
+    } else {
+        printf("Precondicionador inválido");
+    }
 
 
     *time = timestamp() - *time;
 }
+void inverseDLU(){
 
+};
 
 void genTranspose(struct LinearSis *SL, struct LinearSis* SLT)
 {
@@ -80,17 +118,17 @@ void conjGradient(struct LinearSis *SL, double *x, double *r, uint maxit, double
     /*Criando a matriz d e c usados para calculos*/
     double *v1 = malloc(n * sizeof(double));
     memcpy(v1, r, n * sizeof(double)); 
-    struct Matrix d = {v1, n, 1};
+    struct Matrix d = {v1, n, 1, 0};
 
     double *v2 = malloc(n * sizeof(double));
-    struct Matrix c = {v2, n, 1};
+    struct Matrix c = {v2, n, 1, 0};
 
     double cAd = 0.0; //dkt * Adk
     double alpha; // ak
     double deltaOld = 0.0;
     double deltaNew = 0.0;
     double beta = 0.0;
-
+    double tIter = timestamp();
     uint it = 1;
     deltaOld = sqrVector(r,n); //Como rk * rkt eh o quadrado nao precisamos multplicar matrizes
     do {
@@ -103,15 +141,15 @@ void conjGradient(struct LinearSis *SL, double *x, double *r, uint maxit, double
             cAd += c.v[i]*d.v[i];
 
         alpha = deltaOld / cAd; //Calculando ak
-        printf("%f - %f\n", deltaOld, cAd); 
-        printf("%f\n", alpha);
+         
+        //printf("%f\n", alpha);
        
         deltaNew = 0.0;
         for (uint i = 0; i < n; i++) {
             /*Xk+1 = Xk + akdk*/
             x[i] += alpha * d.v[i];
             
-            printf("%f - %d\n", x[i], i);
+            //printf("%f - %d\n", x[i], i);
             /*rk+1 = rk - akAdk*/
             r[i] -= alpha * c.v[i];
             deltaNew += r[i] * r[i];
@@ -123,7 +161,17 @@ void conjGradient(struct LinearSis *SL, double *x, double *r, uint maxit, double
 
         deltaOld = deltaNew;
         it++;
+        tIter -= timestamp();
     }while (it < maxit && sqrt(deltaNew) >= eps);
+
+    printf("%d\n", n);
+    printVetor(x, n);
+    
+    //printf("%f - %f\n", deltaOld, cAd);
+    printVetor(r, n);
+
+
+    printf("%.8g", tIter);
 
     free(v1);
     free(v2);
@@ -143,6 +191,12 @@ void calcResidue(struct LinearSis *SL, double *x, double *r)
     }
 }
 
+void printVetor(double* vet, int n){
+for(int i = 0; i < n; i++){
+    printf("%.16g   ", vet[i]);
+}
+printf("\n");
+}
 void printSis(struct LinearSis *SL){
     uint n = SL->n;
 
@@ -165,18 +219,18 @@ void multMatrix(struct Matrix *A, struct Matrix *B, struct Matrix *C) {
 
     double sum = 0.0;
     uint aSize = A->column;
-    uint bSize = B->column;
+uint bSize = B->column;
 
-    for (uint i = 0; i < A->row; i++) {
-        for (uint j = 0; j < B->column ; j++) {
-            sum = 0.0;
-            for (uint k = 0; k < A->column; k++)
-                sum += A->v[i*aSize + k] * B->v[k*bSize + j];
+        for (uint i = 0; i < A->row; i++) {
+            for (uint j = 0; j < B->column ; j++) {
+                sum = 0.0;
+                for (uint k = 0; k < A->column; k++)
+                    sum += A->v[i*aSize + k] * B->v[k*bSize + j];
 
-            C->v[i*bSize + j] = sum;
-            //printf("%f - C[%d]\n", C->v[i*bSize + j], i*bSize + j);
+                C->v[i*bSize + j] = sum;
+                //printf("%f - C[%d]\n", C->v[i*bSize + j], i*bSize + j);
 
+            }
         }
-    }
 }
 

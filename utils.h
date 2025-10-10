@@ -11,6 +11,7 @@ struct Matrix {
     double *v;
     uint row; /*Quantidades de linhas e coluna*/
     uint column;
+    uint k;/*Quatidade de diagonais da matriz, 0 para matriz não diagonal */
 };
 /*
  * Struct que define um sistema Linear
