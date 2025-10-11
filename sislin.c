@@ -104,7 +104,16 @@ void genPreCond(struct Matrix *A, double w, int n, int k,
         struct Matrix *M, double *time)
 {   
     if (w == -1)
-        return;
+        for(int i = 0; i < M->row; i++){
+            if(A->v[i*n + i] <= 0) { //Matriz nao positiva definida 
+                fprintf(stderr, "ERRO: A[%d][%d] = %.6f -> A não é definida positiva\n", i, i, A->v[i*n + i]);
+                return; 
+            }
+            else
+                M->v[i] = 1.0/A->v[i*n + i];
+            return;
+        }
+        
 
     /*
     PELO VISTO GERAR A DLU PODE SER IGNORADA (CASO SO FIZERMOS O METODO JACOBI)
@@ -148,9 +157,9 @@ void genTranspose(struct Matrix *A, struct Matrix *T)
  * PRECISAMOS DE UMA FORMA MAIS ELEGANTE DE RESOLVER ISSO COM APENAS UMA FUNCAO
  * TEM QUE VER SE O PROFESSOR DESCONTA NOTA DISSO, PROVAVELMENTE SIM!!!
  * */
-void conjGradient(struct LinearSis *SL, double *x, double *r, uint maxit, double eps){
-    calcResidue(SL, x, r);
+void conjGradient(struct LinearSis *SL, double *x, double *r,double *norma, uint maxit, double eps, double* time){
 
+    calcResidue(SL, x, r, NULL);
     uint n = SL->n;
 
     /*Criando a matriz d e c usados para calculos*/
@@ -160,16 +169,19 @@ void conjGradient(struct LinearSis *SL, double *x, double *r, uint maxit, double
 
     double *v2 = malloc(n * sizeof(double));
     struct Matrix c = {v2, n, 1, 0};
-
+    
+    double* prevx = calloc(n, sizeof(double));
     double cAd = 0.0; //dkt * Adk
     double alpha; // ak
     double deltaOld = 0.0;
     double deltaNew = 0.0;
     double beta = 0.0;
-    double tIter = timestamp();
+    double tIter;
     uint it = 1;
+    double totalTime = 0.0;
     deltaOld = sqrVector(r, r, n); //Como rk * rkt eh o quadrado nao precisamos multplicar matrizes
     do {
+        tIter = timestamp();
         /*Calculando ak = rk * rkt / dkt * A * dk */
         multMatrix(SL->A, &d, &c); //Precisamos multiplicar matrizes pois A e d nao sao quadrados
        
@@ -184,13 +196,15 @@ void conjGradient(struct LinearSis *SL, double *x, double *r, uint maxit, double
        
         deltaNew = 0.0;
         for (uint i = 0; i < n; i++) {
+
+            prevx[i] = x[i];
             /*Xk+1 = Xk + akdk*/
             x[i] += alpha * d.v[i];
             
             //printf("%f - %d\n", x[i], i);
             /*rk+1 = rk - akAdk*/
             r[i] -= alpha * c.v[i];
-            deltaNew += r[i] * r[i];
+            deltaNew += r[i] * r[i];*time = timestamp();
         }
 
         beta = deltaNew / deltaOld;
@@ -198,23 +212,24 @@ void conjGradient(struct LinearSis *SL, double *x, double *r, uint maxit, double
             d.v[i] = r[i] + beta *d.v[i];
 
         deltaOld = deltaNew;
+        *norma = calcNormaMax(x, prevx, n);
         it++;
-        tIter -= timestamp();
-    }while (it < maxit && sqrt(deltaNew) >= eps); //ESSA VERIFICACAO DE COVNERGENCIA ESTA ERRADA, OLHAR ENUNCIADO
-    
-    printf("%f - %f\n", deltaOld, cAd);
+        tIter = timestamp() - tIter;
+        totalTime +=tIter;
+    }while (it < maxit &&  *norma >= eps);
+    *time = totalTime/it;
 
     free(v1);
     free(v2);
 }
 
-void conjGradientPre(struct LinearSis *SL, double *x, double *r, struct Matrix *M, uint maxit, double eps){
+void conjGradientPre(struct LinearSis *SL, double *x, double *norma, double *r, struct Matrix *M, uint maxit, double eps, double* time){
 
-    double time;
-    calcResidue(SL, x, r);
+    calcResidue(SL, x, r, NULL);
     uint n = SL->n;
-    
-    double *Yv = malloc(n * sizeof(double)); // Y para calcular o SL com condicionador
+
+    // Y para calcular o SL com condicionador
+    double *Yv = malloc(n * sizeof(double)); 
     struct Matrix y = {Yv, 1, SL->n, 0};
     struct Matrix rMatrix = {r, 1, SL->n, 0};
     for (int i = 0; i < n; i++)
@@ -231,6 +246,7 @@ void conjGradientPre(struct LinearSis *SL, double *x, double *r, struct Matrix *
     double *v2 = malloc(n * sizeof(double));
     struct Matrix c = {v2, n, 1, 0};
 
+    double *prevx = calloc(n,sizeof(double));
     double cAd = 0.0; //dkt * Adk
     double alpha; // ak
     double deltaOld = 0.0;
@@ -250,37 +266,72 @@ void conjGradientPre(struct LinearSis *SL, double *x, double *r, struct Matrix *
             cAd += c.v[i]*d.v[i];
 
         alpha = deltaOld / cAd; //Calculando ak
+        printf("alpha %f = deltaold %f / cAd %f\n", alpha, deltaOld,cAd);
          
         //printf("%f\n", alpha);
        
         deltaNew = 0.0;
         for (uint i = 0; i < n; i++) {
+            prevx[i] = x[i];
+            printf("vet antes:\n");
+            printVetor(x,n);
             /*Xk+1 = Xk + akdk*/
             x[i] += alpha * d.v[i];
-            
+            printf("vet depois:\n");
+            printVetor(x,n);
+            printf("\n\n");
             //printf("%f - %d\n", x[i], i);
             /*rk+1 = rk - akAdk*/
             r[i] -= alpha * c.v[i];
 
+            
             deltaNew += y.v[i] * r[i];
             valueNew += r[i] * r[i];
+            norma[i] -= x[i];
+            printf("deltanew: %f\ny.v[%d]: %f\nr[%d]:%f\n",deltaNew,i,y.v[i],i,r[i]);
         }
 
+        printf("Bdeltanew %f\n", deltaNew);
         beta = deltaNew / deltaOld;
         for(uint i = 0; i < n; i++)
             d.v[i] = r[i] + beta *d.v[i];
 
+        printf("deltanew %f\n", deltaNew);
         deltaOld = deltaNew;
         it++;
-        tIter -= timestamp();
-    }while (it < maxit && sqrt(valueNew) >= eps); //ESSA VERIFICACAO DE COVNERGENCIA ESTA ERRADA, OLHAR ENUNCIADO
-    
+        *norma = calcNormaMax(x, prevx, n); 
+        tIter = timestamp() - tIter;
+        printf("it:%d  maxit: %d\n", it, maxit);
+    }while (it < maxit && *norma >= eps); //ESSA VERIFICACAO DE COVNERGENCIA ESTA ERRADA, OLHAR ENUNCIADO
+    *time = tIter/it;
     free(v1);
     free(v2);
 }
 
-void calcResidue(struct LinearSis *SL, double *x, double *r)
+double calcNormaMax(double *x,double* y, int n){
+    double max = 0.0;
+    double aux = 0.0;
+    for (int i = 0; i < n; i++){
+        aux = fabs(x[i] - y[i]);
+        if (max < aux)
+            max = aux;
+    }
+    printf("max: %f\n\n", max);
+    return max;
+}
+
+double calcNormaEuclidiana(double *x, int n){
+    double aux = 0.0;
+    for (int i = 0; i < n; i++){
+        aux += x[i]*x[i];
+    }
+    return sqrt(aux);
+}
+
+void calcResidue(struct LinearSis *SL, double *x, double *r, double *time)
 {
+    if (time)
+        *time = timestamp();
     uint n = SL->n;
     double sum = 0;
 
@@ -291,6 +342,8 @@ void calcResidue(struct LinearSis *SL, double *x, double *r)
         r[i] = SL->b->v[i] - sum;
         //printf("%f\n", r[i]);
     }
+    if (time)
+        *time = timestamp() - *time;
 }
 
 void printVetor(double* vet, int n){
@@ -336,7 +389,7 @@ void multMatrix(struct Matrix *A, struct Matrix *B, struct Matrix *C) {
 }
 
 /*ME PARECE DESNECESSARIO, UTILIZAR A MULTIPLICACAO ENTRE MATRIZES JA  BASTA PARA MANTER SIMETRICA POSITIVA DEFINIDA, VER CGNE */
-void sumMatrix(struct Matrix *A, struct Matrix *B, struct Matrix *C) {
+/*void sumMatrix(struct Matrix *A, struct Matrix *B, struct Matrix *C) {
     if(A->column != B->row)
         return; 
 
@@ -347,4 +400,4 @@ void sumMatrix(struct Matrix *A, struct Matrix *B, struct Matrix *C) {
             C->v[i*n+j] = A->v[i*n+j] + B->v[i*n+j];
         }
     }
-}
+}*/

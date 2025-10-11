@@ -29,7 +29,7 @@ int main(){
 
     struct LinearSis SL = {&A, &b, n, k};
     genKDiagonal(&SL);
-    printSis(&SL);
+    //printSis(&SL);
 
     /*Gerando simetrica positiva, criando Matriz A2, b2 para guardar os novos valores*/
     double *av1 = malloc(n*n*sizeof(double));
@@ -37,8 +37,8 @@ int main(){
 
     double *bv1 = malloc(n*sizeof(double));
     struct Matrix b2 = {bv1, n, 1, 0};
-    double time2; //Arrumar esse time e os outros do trabalho
-    genSymmetricPositive(&SL, &A2, &b2, &time2); //TODO: TALVEZ FAZER UMA VERIFICACAAO PARA EVITAR EM MATRIZES MAL CONDICIONADAAS
+    double timePC; //Arrumar esse time e os outros do trabalho
+    genSymmetricPositive(&SL, &A2, &b2, &timePC); //TODO: TALVEZ FAZER UMA VERIFICACAAO PARA EVITAR EM MATRIZES MAL CONDICIONADAAS
 
     free(av);
     free(bv); //Liberando o vetor A e b pois nao preciso mais deles
@@ -47,28 +47,34 @@ int main(){
     SL.b = &b2; //Agora os valores a matriz e vetor independente sao simetricos
     printSis(&SL);
 
-
     double* X = (double*) calloc(n, sizeof(double));
     double* r = (double*) malloc(n * sizeof(double));
-    double time = timestamp();
-
+    double* norma = (double*) malloc(n * sizeof(double));
+    double timeM; 
+    double timeGrad;
+    double timeRes;
     //TODO: Fazer uma checagem para w
     //(nao comparar igualdade com valores ponto flutuante, fazer uma margem)
-    if(w == -1) { 
-        conjGradient(&SL, X, r, maxit, eps);
-    }
-    else if(w == 0){
-        double time; 
-        double *Mv = calloc(n, sizeof(double));
-        struct Matrix M = {Mv, n, 1, SL.k};
-        genPreCond(SL.A, w, SL.n, SL.k, &M, &time);
-        conjGradientPre(&SL, X, r, &M, maxit, eps);
-        free(Mv);
-    }
-    printf("%d\n",n);
     
-    printVetor(X, n);
-    printVetor(r, n);
+    double *Mv = calloc(n, sizeof(double));
+    struct Matrix M = {Mv, n, 1, SL.k};
+
+    genPreCond(SL.A, w, SL.n, SL.k, &M, &timeM);
+    conjGradientPre(&SL, X, r, norma, &M, maxit, eps, &timeGrad);
+    free(Mv);
+    calcResidue(&SL, X, r, &timeRes);
+    
+    
+    printf("output:\n%d\n",n);
+    
+    double normaR = calcNormaEuclidiana(r, n);
+    printf("%.8g\n", *norma);
+    printVetor(X,n);
+    printf("%.8g\n", normaR);
+    printf("%.8g\n", timePC + timeM);
+    printf("%.8g\n", timeGrad);
+    printf("%.8g\n", timeRes);
+
 
     free(X);
     free(av1);

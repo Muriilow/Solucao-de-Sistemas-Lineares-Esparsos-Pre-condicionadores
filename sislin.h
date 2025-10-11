@@ -27,7 +27,7 @@ void genKDiagonal(struct LinearSis *SL);
 void genSymmetricPositive(struct LinearSis *SL, struct Matrix *ASP, struct Matrix *bsp, double *time);
 
 /*
- * Gera duas matrizes triangulares e um vetor 
+ * Gera duas matrizes triangulares e um vetor (D, L e U são matrizes de mesmo tamanho que A)
  * @param A: Matriz A que sera decomposta 
  * @param D: Vetor da diagonal principal
  * @param L: Matriz triangular "Lower"
@@ -43,7 +43,7 @@ void genDLU(struct Matrix* A, struct Matrix* D, struct Matrix* L, struct Matrix*
  * @param n: Ordem da matriz A 
  * @param k: Ordem da diagonal da matriz A 
  * @param M: Matriz preCond
- * @para time: Variavel para calcular o tempo
+ * @param time: Variavel para calcular o tempo
  * */
 void genPreCond(struct Matrix *A, double w, int n, int k, struct Matrix *M, double *time);
 
@@ -59,29 +59,49 @@ void genTranspose(struct Matrix *A, struct Matrix *AT);
  * @param SL: Sistema Linear a ser resolvido 
  * @param x: Vetor solucao 
  * @param r: Vetor do residuo. R = b - Ax
+ * @param r: Vetor de diferenças em x entre iterações
  * @param maxit: Valor maximo para convergencia
  * @param eps: Valor de parada
+ * @param time: Variavel para calcular o tempo
  * */
-void conjGradient(struct LinearSis *SL, double *x, double *r, uint maxit, double eps);
+void conjGradient(struct LinearSis *SL, double *x, double *r, double *norma, uint maxit, double eps, double* time);
 
 /*
  * Algoritmo que resolve Ax = b com o uso de pre condicionamento
  * @param SL: Sistema Linear a ser resolvido 
  * @param x: Vetor solucao 
  * @param r: Vetor do residuo. R = b - Ax
+ * @param r: Vetor de diferenças em x entre iterações
  * @param M: Matriz preCond
  * @param maxit: Valor maximo para convergencia
  * @param eps: Valor de parada
+ * @param time: Variavel para calcular o tempo
  * */
-void conjGradientPre(struct LinearSis *SL, double *x, double *r, struct Matrix *M, uint maxit, double eps);
+void conjGradientPre(struct LinearSis *SL, double *x, double *r, double *norma, struct Matrix *M, uint maxit, double eps, double* time);
+
+/*
+ * Algoritmo que retorna a maior diferença entre os elementos de dois vetores de tamanho n
+ * @param x: Vetor para calcular a norma
+ * @param y: Vetor para calcular a norma
+ * @param n: Tamanho do Vetor
+ * */
+double calcNormaMax(double *x, double *y,int n);
+
+/*
+ * Algoritmo que retorna a raiz da soma dos quadrados de um vetor
+ * @param x: Vetor para calcular a norma
+ * @param n: Tamanho do Vetor
+ * */
+double calcNormaEuclidiana(double *x, int n);
 
 /*
  * Algoritmo que calcula r = b - Ax
  * @param SL: Sistema Linear que o residuo ira calcular
  * @param x: Vetor solucao 
  * @param r: Vetor do residuo
+ * @param time: Variavel para calcular o tempo
  * */
-void calcResidue(struct LinearSis *SL, double *x, double *r);
+void calcResidue(struct LinearSis *SL, double *x, double *r, double* time);
 
 /*
  * Printa o vetor, debug

@@ -4,7 +4,7 @@ CFLAGS = -O0
 LFLAGS = -lm
 
 PROG = cgSolver
-MODULES = utils	pcgc sislin utils $(PROG)
+MODULES = utils	sislin utils $(PROG)
 OBJS = $(addsuffix .o,$(MODULES))
 SRCS = $(addsuffix .c,$(MODULES)) $(addsuffix .h,$(MODULES))
 
