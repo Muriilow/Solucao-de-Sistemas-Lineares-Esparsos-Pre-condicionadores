@@ -122,7 +122,12 @@ void genPreCond(struct Matrix *A, double w, int n, int k,
     *time = timestamp();
     if (w == 0){
         for(int i = 0; i < M->row; i++){
-            M->v[i] = 1.0/A->v[i*n + i];
+            if(A->v[i*n + i] <= 0) { //Matriz nao positiva definida 
+                fprintf(stderr, "ERRO: A[%d][%d] = %.6f -> A não é definida positiva\n", i, i, A->v[i*n + i]);
+                return; 
+            }
+            else
+                M->v[i] = 1.0/A->v[i*n + i];
         }
     }
 
