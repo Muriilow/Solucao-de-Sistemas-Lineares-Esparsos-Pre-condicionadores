@@ -45,6 +45,10 @@ int main(){
         conjGradientPre(&SL, X, r, &M, maxit, eps);
         free(Mv);
     }
+    printf("%d\n",n);
+    
+    printVetor(X, n);
+    printVetor(r, n);
 
     free(X);
     free(a1);
