@@ -20,20 +20,40 @@ int main(){
     scanf("%d", &maxit);
     scanf("%lf", &eps);
 
-    double *a1 = malloc(n*n*sizeof(double));
-    struct Matrix A = {a1, n, n, k};
+    /*Criando o sistema Linear, A: Matriz, b: Vetor Indep*/
+    double *av = malloc(n*n*sizeof(double));
+    struct Matrix A = {av, n, n, k};
 
-    double *b1 = malloc(n*sizeof(double));
-    struct Matrix b = {b1, n, 1, 0};
+    double *bv = malloc(n*sizeof(double));
+    struct Matrix b = {bv, n, 1, 0};
 
     struct LinearSis SL = {&A, &b, n, k};
     genKDiagonal(&SL);
-
     printSis(&SL);
+
+    /*Gerando simetrica positiva, criando Matriz A2, b2 para guardar os novos valores*/
+    double *av1 = malloc(n*n*sizeof(double));
+    struct Matrix A2 = {av1, n, n, k};
+
+    double *bv1 = malloc(n*sizeof(double));
+    struct Matrix b2 = {bv1, n, 1, 0};
+    double time2; //Arrumar esse time e os outros do trabalho
+    genSymmetricPositive(&SL, &A2, &b2, &time2); //TODO: TALVEZ FAZER UMA VERIFICACAAO PARA EVITAR EM MATRIZES MAL CONDICIONADAAS
+
+    free(av);
+    free(bv); //Liberando o vetor A e b pois nao preciso mais deles
+    
+    SL.A = &A2;
+    SL.b = &b2; //Agora os valores a matriz e vetor independente sao simetricos
+    printSis(&SL);
+
+
     double* X = (double*) calloc(n, sizeof(double));
     double* r = (double*) malloc(n * sizeof(double));
     double time = timestamp();
 
+    //TODO: Fazer uma checagem para w
+    //(nao comparar igualdade com valores ponto flutuante, fazer uma margem)
     if(w == -1) { 
         conjGradient(&SL, X, r, maxit, eps);
     }
@@ -51,27 +71,8 @@ int main(){
     printVetor(r, n);
 
     free(X);
-    free(a1);
-    free(b1);
-    free(r);
+    free(av1);
+    free(bv1);
+    free(r); //Valgrind nao esta dando erro
     return 0;
-    
-    /* teste
-     * srandom(20252);
-    int n=3;
-    int k=3;
-    double v1[9] = {3, 4, 5, 1, 2, 3, 5, 6, 7};
-    double v2[9] = {-1, 0, 3, 2, 1, 9, 9, 9, 9};
-    double* v3 = (double*) malloc(n*n*sizeof(double));
-
-    struct Matrix B = {v2, n, n, n, n};
-    struct Matrix C = {v3, n, n, n, n};
-    struct LinearSis SL = {v3, v3, n, k};
-
-    double time = timestamp();
-   
-    multMatrix(&A, &B, &C);
-    printSis(&SL);
-
-    return 0; */
 }

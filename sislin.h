@@ -10,39 +10,107 @@
 
 
 /*ATENCAO: Funcoes inline tem sua implementacao no .h*/
-/**
- * Função que gera os coeficientes de um sistema linear k-diagonal
- * @param i,j coordenadas do elemento a ser calculado (0<=i,j<n)
- * @param k numero de diagonais da matriz A
- */
-static inline double genRandomA(uint i, uint j, uint k)
-{
-  static double invRandMax = 1.0 / (double)RAND_MAX;
-  return ( (i==j) ? (double)(k<<1) : 1.0 )  * (double)random() * invRandMax;
-};
 
-/**
- * Função que gera os termos independentes de um sistema linear k-diagonal
- * @param k numero de diagonais da matriz A
- */
-static inline double genRandomB(uint k)
-{
-  static double invRandMax = 1.0 / (double)RAND_MAX;
-  return (double)(k<<2) * (double)random() * invRandMax;
-};
-
+/*
+ * Coloca valores x aleatorios no SL.
+ * @param SL: Sistema linear a ser modificado
+ * */
 void genKDiagonal(struct LinearSis *SL);
 
-void genSymmetricPositive(double *A, double *b, int n, int k, double **ASP, double **bsp, double *time);
+/*
+ * Gera um sistema linear simetrico aplicando o metodo CGNE "A^t * Ax = A^t * b"
+ * @param SL: Sistema linear a ser corrigido
+ * @param ASP: MAtriz A corrigida 
+ * @param bsp: Vetor b corrigido
+ * @param Variavel para calcular o tempo
+ * */
+void genSymmetricPositive(struct LinearSis *SL, struct Matrix *ASP, struct Matrix *bsp, double *time);
+
+/*
+ * Gera duas matrizes triangulares e um vetor 
+ * @param A: Matriz A que sera decomposta 
+ * @param D: Vetor da diagonal principal
+ * @param L: Matriz triangular "Lower"
+ * @param U: Matriz triangular "Upper"
+ * @param time: Variavel para calcular o tempo
+ * */
 void genDLU(struct Matrix* A, struct Matrix* D, struct Matrix* L, struct Matrix* U, double *time);
+
+/*
+ * Gera os pre condicionamentos dependendo do valor de w 
+ * @param A: Matriz A que gerara os preCond
+ * @param w: Valor que define qual tipo de pre condicionamento sera usado
+ * @param n: Ordem da matriz A 
+ * @param k: Ordem da diagonal da matriz A 
+ * @param M: Matriz preCond
+ * @para time: Variavel para calcular o tempo
+ * */
 void genPreCond(struct Matrix *A, double w, int n, int k, struct Matrix *M, double *time);
+
+/*
+ * Gera a transposta da Matriz
+ * @param A: Matriz A que gerara a transposta
+ * @param AT: A matriz transposta
+ * */
 void genTranspose(struct Matrix *A, struct Matrix *AT);
+
+/*
+ * Algoritmo que resolve Ax = b
+ * @param SL: Sistema Linear a ser resolvido 
+ * @param x: Vetor solucao 
+ * @param r: Vetor do residuo. R = b - Ax
+ * @param maxit: Valor maximo para convergencia
+ * @param eps: Valor de parada
+ * */
 void conjGradient(struct LinearSis *SL, double *x, double *r, uint maxit, double eps);
+
+/*
+ * Algoritmo que resolve Ax = b com o uso de pre condicionamento
+ * @param SL: Sistema Linear a ser resolvido 
+ * @param x: Vetor solucao 
+ * @param r: Vetor do residuo. R = b - Ax
+ * @param M: Matriz preCond
+ * @param maxit: Valor maximo para convergencia
+ * @param eps: Valor de parada
+ * */
 void conjGradientPre(struct LinearSis *SL, double *x, double *r, struct Matrix *M, uint maxit, double eps);
+
+/*
+ * Algoritmo que calcula r = b - Ax
+ * @param SL: Sistema Linear que o residuo ira calcular
+ * @param x: Vetor solucao 
+ * @param r: Vetor do residuo
+ * */
 void calcResidue(struct LinearSis *SL, double *x, double *r);
+
+/*
+ * Printa o vetor, debug
+ * @param vet: Vetor que sera printado
+ * @param n: Quantidade de itens no vetor 
+ * */
 void printVetor(double* vet, int n);
+
+/*
+ * Printa o SL
+ * @param SL: Sistema linear a ser imprimido
+ * */
 void printSis(struct LinearSis *SL);
+
+/*
+ * A * B = C, funciona para vetores
+ * @param A: Matriz A que sera multiplicada
+ * @param B: Matriz B que sera multiplicada
+ * @param C: Matriz resultado
+ * */
 void multMatrix(struct Matrix *A, struct Matrix *B, struct Matrix *C);
+
+/*
+ * A + B = C
+ * @param A: Matriz A que sera somada
+ * @param B: Matriz B que sera somada
+ * @param C: Matriz resultado
+ * */
+void sumMatrix(struct Matrix *A, struct Matrix *B, struct Matrix *C);
 
 #endif // __SISLIN_H__
 

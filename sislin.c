@@ -5,6 +5,28 @@
 
 #include "sislin.h"
 
+/*TODO: DEVEMOS VERIFICAR DIVISAO POR ZERO NAS FUNCOES 
+ NO ENUNCIADO BASTA UMA SIMPLES PRINT DE AVISO E RETORNAR O MAIN COM != 0 */
+
+/**
+ * Função que gera os coeficientes de um sistema linear k-diagonal
+ * @param i,j coordenadas do elemento a ser calculado (0<=i,j<n)
+ * @param k numero de diagonais da matriz A
+ */
+static inline double genRandomA(uint i, uint j, uint k){
+    static double invRandMax = 1.0 / (double)RAND_MAX;
+    //Eh sempre diagonal dominante
+    return ( (i==j) ? (double)(k<<1) : 1.0 )  * (double)random() * invRandMax;
+}
+
+/**
+ * Função que gera os termos independentes de um sistema linear k-diagonal
+ * @param k numero de diagonais da matriz A
+ */
+static inline double genRandomB(uint k){
+    static double invRandMax = 1.0 / (double)RAND_MAX;
+    return (double)(k<<2) * (double)random() * invRandMax;
+}
 
 static double sqrVector(double* x, double* y, uint n){
     double sqrVector = 0;
@@ -13,7 +35,7 @@ static double sqrVector(double* x, double* y, uint n){
     }
     return sqrVector;
 }
-/* Cria matriz 'A' k-diagonal e Termos independentes B */
+
 void genKDiagonal(struct LinearSis *SL){
     int k = SL->k;
     int n = SL->n;
@@ -32,19 +54,30 @@ void genKDiagonal(struct LinearSis *SL){
     }
 }
 
-/* Gera matriz simetrica positiva */
-void genSymmetricPositive(struct Matrix *A, struct Matrix *b, int n, int k, struct Matrix *ASP, double *bsp, double *time)
+/* Gera matriz simetrica positiva. Isso pode ser ruim ou bom. A maneira que estamos usando (CGNE) pode piorar uma matriz mal condicionada. O OBJETIVO DESSA FUNCAO EH TRANSFORMAR UMA MATRIZ NAO SDP EM SDP, MAS CASO A MATRIZ SEJA MAL CONDICIONADA (NESSE CASO INDEPENDE DE SER OU NAO SIMETRICA E POSITIVA) ESSA FUNCAO IRA PIORAR EM MUITO A RESOLUCAO DA MATRIZ
+ * PORTANTO, CHECAR COM O PROFESSOR SE EH NECESSARIO FAZER VERIFICACAO ANTES DE USAR A CGNE, PARA EVITAR ESSES PROBLEMAS*/
+void genSymmetricPositive(struct LinearSis *SL, struct Matrix *ASP, struct Matrix *bsp, double *time)
 {
+    struct Matrix *A = SL->A;
+    struct Matrix *b = SL->b;
+
     *time = timestamp();
-    struct Matrix AT ={malloc(A->row*A->column*sizeof(double)), A->column, A->row, A->k};
 
-    genTranspose(A, &AT);
+    double *Atv = malloc(A->row*A->column*sizeof(double));
+    struct Matrix AT ={Atv, A->row, A->column, A->k};
 
-    sumMatrix(A,&AT,ASP);
+    genTranspose(&AT, A);
+    
+    //ESSE CALCULO EH O MESMO QUE ELEVAR O QUADRADO DE TODOS OS ELEMENTOS DE A
+    //CASO ACHE INTERESSANTE FAZER UMA FUNCAO QUE FAZ SO ISSO SERIA MENOS CUSTOSO ACREDITO EU.
+    multMatrix(A, &AT, ASP);
+    multMatrix(&AT, b, bsp);
+
     *time = timestamp() - *time;
+    free(Atv);
 }
 
-
+//TODO: Deu erro ultima vez que usei, nao sei se eh a funcao ou a forma como coloquei 
 void genDLU(struct Matrix* A, struct Matrix* D, struct Matrix* L, struct Matrix* U, double *time)
 {
     int n = A->row;
@@ -66,16 +99,16 @@ void genDLU(struct Matrix* A, struct Matrix* D, struct Matrix* L, struct Matrix*
     *time = timestamp() - *time;
 }
 
-/**
- * Devolve matriz M⁻¹
- *
- */
+/*Um pre condicionamento melhora um SL simetrico, positivo, definido e mal condicionado.*/
 void genPreCond(struct Matrix *A, double w, int n, int k,
         struct Matrix *M, double *time)
 {   
     if (w == -1)
         return;
 
+    /*
+    PELO VISTO GERAR A DLU PODE SER IGNORADA (CASO SO FIZERMOS O METODO JACOBI)
+    TEM QUE VER COM O PROFESSOR
     double* dv = calloc(A->row*A->column, sizeof(double));
     double* lv = calloc(A->row*A->column, sizeof(double));
     double* uv = calloc(A->row*A->column, sizeof(double));
@@ -84,25 +117,17 @@ void genPreCond(struct Matrix *A, double w, int n, int k,
     struct Matrix U = {uv, A->row, A->column, A->k};
     double *DLUTime;
 
-    //genDLU(A,&D,&L,&U,DLUTime); TODO: Consertar o ERRO 
+    genDLU(A,&D,&L,&U,DLUTime); TODO: Consertar o ERRO */
 
     *time = timestamp();
     if (w == 0){
         for(int i = 0; i < M->row; i++){
             M->v[i] = 1.0/A->v[i*n + i];
         }
-    } else if (w == 1){
-        ; //placeholder
-    } else if (w > 1 && w < 2){
-        ; //placeholder
     }
 
     *time = timestamp() - *time;
 }
-void inverseDLU(){
-
-};
-
 
 void genTranspose(struct Matrix *A, struct Matrix *T)
 {
@@ -113,7 +138,11 @@ void genTranspose(struct Matrix *A, struct Matrix *T)
         for(uint j = 0; j < m; j++)
             A->v[j*n+i] = T->v[i*n+j];
 }
-
+/*TODO: COMO VOCE DEVE TER VISTO, EU CRIEI DOIS METODOS SIMILARES
+ * UM PARA FAZER SEM PRECOND E OUTRO PARA FAZER COM PRECOND
+ * PRECISAMOS DE UMA FORMA MAIS ELEGANTE DE RESOLVER ISSO COM APENAS UMA FUNCAO
+ * TEM QUE VER SE O PROFESSOR DESCONTA NOTA DISSO, PROVAVELMENTE SIM!!!
+ * */
 void conjGradient(struct LinearSis *SL, double *x, double *r, uint maxit, double eps){
     calcResidue(SL, x, r);
 
@@ -166,7 +195,7 @@ void conjGradient(struct LinearSis *SL, double *x, double *r, uint maxit, double
         deltaOld = deltaNew;
         it++;
         tIter -= timestamp();
-    }while (it < maxit && sqrt(deltaNew) >= eps);
+    }while (it < maxit && sqrt(deltaNew) >= eps); //ESSA VERIFICACAO DE COVNERGENCIA ESTA ERRADA, OLHAR ENUNCIADO
     
     printf("%f - %f\n", deltaOld, cAd);
 
@@ -183,20 +212,16 @@ void conjGradientPre(struct LinearSis *SL, double *x, double *r, struct Matrix *
     double *Yv = malloc(n * sizeof(double)); // Y para calcular o SL com condicionador
     struct Matrix y = {Yv, 1, SL->n, 0};
     struct Matrix rMatrix = {r, 1, SL->n, 0};
-    for (int i = 0; i < n; i++) {
-        y.v[i] = M->v[i] * r[i];
-        //printf("%lf - %lf - %lf\n", y.v[i], M->v[i], r[i]);
-    }
-    //multMatrix(M, &rMatrix, &y); // y = M-1 * r
+    for (int i = 0; i < n; i++)
+        y.v[i] = M->v[i] * r[i]; // y = M^-1 * r
 
     /*Criando a matriz d e c usados para calculos*/
     double *v1 = calloc(n,sizeof(double));
     struct Matrix d = {v1, n, 1, 0};
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++)
         d.v[i] = M->v[i] * SL->b->v[i];
-        //printf("%lf - %lf - %lf\n", d.v[i], M->v[i], SL->b->v[i]);
-    }
-    multMatrix(M, SL->b, &d); // v = M-1 * b
+
+    multMatrix(M, SL->b, &d); // v = M^-1 * b
 
     double *v2 = malloc(n * sizeof(double));
     struct Matrix c = {v2, n, 1, 0};
@@ -243,7 +268,7 @@ void conjGradientPre(struct LinearSis *SL, double *x, double *r, struct Matrix *
         deltaOld = deltaNew;
         it++;
         tIter -= timestamp();
-    }while (it < maxit && sqrt(valueNew) >= eps);
+    }while (it < maxit && sqrt(valueNew) >= eps); //ESSA VERIFICACAO DE COVNERGENCIA ESTA ERRADA, OLHAR ENUNCIADO
     
     free(v1);
     free(v2);
@@ -284,7 +309,8 @@ void printSis(struct LinearSis *SL){
         printf("]  [ %.4e ]\n", SL->b->v[i]);
     }
 }
-
+/*ESSA FUNCAO MAIS GERAL FUNCIONA PARA MATRIZES E VETORES, MAS DEPENDE DE COMO O VETOR ESTA ORGANIZADO
+ * UM VETOR LINHA PODE CAUSAR PROBLEMAS ONDE UM VETOR COLUNA NAO, FAZER UMA MULT ENTRE MATRIZ E VETOR SERIA MAIS SEGURO*/
 void multMatrix(struct Matrix *A, struct Matrix *B, struct Matrix *C) {
     if(A->column != B->row)
         return; 
@@ -304,6 +330,7 @@ void multMatrix(struct Matrix *A, struct Matrix *B, struct Matrix *C) {
     }
 }
 
+/*ME PARECE DESNECESSARIO, UTILIZAR A MULTIPLICACAO ENTRE MATRIZES JA  BASTA PARA MANTER SIMETRICA POSITIVA DEFINIDA, VER CGNE */
 void sumMatrix(struct Matrix *A, struct Matrix *B, struct Matrix *C) {
     if(A->column != B->row)
         return; 
