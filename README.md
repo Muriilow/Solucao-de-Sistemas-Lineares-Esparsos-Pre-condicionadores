@@ -76,8 +76,8 @@ k: Valor que define quantas diagonais não zero
 - void genSymmetricPositive(struct LinearSis *SL, struct Matrix *ASP, struct Matrix *bsp, double *time);
 - int genPreCond(struct Matrix *A, double w, int n, int k, struct Matrix *M, double *time);
 - void genTranspose(struct Matrix *A, struct Matrix *AT);
-- int conjGradientPre(struct LinearSis *SL, double *x, double *r,double *norma, struct Matrix *M, uint maxit, double eps, double* time)
-- double calcNormaMax(double *x, double *y,int n);
+- int conjGradientPre(struct LinearSis *SL, double *x, double *r, double *norma, struct Matrix *M, uint maxit, double eps, double* time)
+- double calcNormaMax(double *x, double *y, int n);
 - double calcNormaEuclidiana(double *x, int n);
 - void calcResidue(struct LinearSis *SL, double *x, double *r, double* time);
 - void printVetor(double* vet, int n);

@@ -55,7 +55,7 @@ void genTranspose(struct Matrix *A, struct Matrix *AT);
  * @param eps: Valor de parada
  * @param time: Variavel para calcular o tempo
  * */
-int conjGradientPre(struct LinearSis *SL, double *x, double *r,double *norma, struct Matrix *M, uint maxit, double eps, double* time);
+int conjGradientPre(struct LinearSis *SL, double *x, double *r, double *norma, struct Matrix *M, uint maxit, double eps, double* time);
 
 /*
  * Algoritmo que retorna a maior diferença entre os elementos de dois vetores de tamanho n
@@ -63,7 +63,7 @@ int conjGradientPre(struct LinearSis *SL, double *x, double *r,double *norma, st
  * @param y: Vetor para calcular a norma
  * @param n: Tamanho do Vetor
  * */
-double calcNormaMax(double *x, double *y,int n);
+double calcNormaMax(double *x, double *y, int n);
 
 /*
  * Algoritmo que retorna a raiz da soma dos quadrados de um vetor
