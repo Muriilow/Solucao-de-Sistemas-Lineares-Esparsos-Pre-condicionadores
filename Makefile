@@ -1,7 +1,7 @@
 CC = gcc
 
-CFLAGS = -O0 
-LFLAGS = -lm
+CFLAGS = -O0 -g -fopenmp -DLIKWID_PERFMON -L$LIKWID_LIB -I$LIKWID_INCLUDE
+LFLAGS = -lm -llikwid
 
 PROG = cgSolver
 MODULES = utils	sislin utils $(PROG)

@@ -55,18 +55,6 @@ void genPreCond(struct Matrix *A, double w, int n, int k, struct Matrix *M, doub
 void genTranspose(struct Matrix *A, struct Matrix *AT);
 
 /*
- * Algoritmo que resolve Ax = b
- * @param SL: Sistema Linear a ser resolvido 
- * @param x: Vetor solucao 
- * @param r: Vetor do residuo. R = b - Ax
- * @param r: Vetor de diferenças em x entre iterações
- * @param maxit: Valor maximo para convergencia
- * @param eps: Valor de parada
- * @param time: Variavel para calcular o tempo
- * */
-void conjGradient(struct LinearSis *SL, double *x, double *r, double *norma, uint maxit, double eps, double* time);
-
-/*
  * Algoritmo que resolve Ax = b com o uso de pre condicionamento
  * @param SL: Sistema Linear a ser resolvido 
  * @param x: Vetor solucao 
@@ -77,7 +65,7 @@ void conjGradient(struct LinearSis *SL, double *x, double *r, double *norma, uin
  * @param eps: Valor de parada
  * @param time: Variavel para calcular o tempo
  * */
-void conjGradientPre(struct LinearSis *SL, double *x, double *r, double *norma, struct Matrix *M, uint maxit, double eps, double* time);
+int conjGradientPre(struct LinearSis *SL, double *x, double *r, double *norma, struct Matrix *M, uint maxit, double eps, double* time);
 
 /*
  * Algoritmo que retorna a maior diferença entre os elementos de dois vetores de tamanho n
@@ -123,14 +111,6 @@ void printSis(struct LinearSis *SL);
  * @param C: Matriz resultado
  * */
 void multMatrix(struct Matrix *A, struct Matrix *B, struct Matrix *C);
-
-/*
- * A + B = C
- * @param A: Matriz A que sera somada
- * @param B: Matriz B que sera somada
- * @param C: Matriz resultado
- * */
-void sumMatrix(struct Matrix *A, struct Matrix *B, struct Matrix *C);
 
 #endif // __SISLIN_H__
 

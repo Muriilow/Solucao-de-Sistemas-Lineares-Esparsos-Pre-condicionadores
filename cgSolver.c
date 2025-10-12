@@ -2,12 +2,15 @@
 #include <stdlib.h>    /* for exit e random/srandom */
 #include <string.h>
 #include <math.h>
+#include <likwid.h>
 
 #include "utils.h"
 #include "sislin.h"
 
 int main(){
+    LIKWID_MARKER_INIT;
     srandom(20252);
+    int status = 0;
     int n;
     int k;
     uint maxit;
@@ -20,6 +23,7 @@ int main(){
     scanf("%d", &maxit);
     scanf("%lf", &eps);
 
+    LIKWID_MARKER_START("INICIO");
     /*Criando o sistema Linear, A: Matriz, b: Vetor Indep*/
     double *av = malloc(n*n*sizeof(double));
     struct Matrix A = {av, n, n, k};
@@ -60,7 +64,9 @@ int main(){
     struct Matrix M = {Mv, n, 1, SL.k};
 
     genPreCond(SL.A, w, SL.n, SL.k, &M, &timeM);
-    conjGradientPre(&SL, X, r, norma, &M, maxit, eps, &timeGrad);
+    status = conjGradientPre(&SL, X, r, norma, &M, maxit, eps, &timeGrad);
+    if (status == -1)
+        return -1;
     free(Mv);
     calcResidue(&SL, X, r, &timeRes);
     
@@ -79,6 +85,10 @@ int main(){
     free(X);
     free(av1);
     free(bv1);
+    free(norma);
     free(r); //Valgrind nao esta dando erro
+
+    LIKWID_MARKER_STOP("INICIO");
+    LIKWID_MARKER_CLOSE;
     return 0;
 }

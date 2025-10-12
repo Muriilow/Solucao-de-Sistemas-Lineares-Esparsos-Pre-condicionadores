@@ -152,78 +152,8 @@ void genTranspose(struct Matrix *A, struct Matrix *T)
         for(uint j = 0; j < m; j++)
             A->v[j*n+i] = T->v[i*n+j];
 }
-/*TODO: COMO VOCE DEVE TER VISTO, EU CRIEI DOIS METODOS SIMILARES
- * UM PARA FAZER SEM PRECOND E OUTRO PARA FAZER COM PRECOND
- * PRECISAMOS DE UMA FORMA MAIS ELEGANTE DE RESOLVER ISSO COM APENAS UMA FUNCAO
- * TEM QUE VER SE O PROFESSOR DESCONTA NOTA DISSO, PROVAVELMENTE SIM!!!
- * */
-void conjGradient(struct LinearSis *SL, double *x, double *r,double *norma, uint maxit, double eps, double* time){
 
-    calcResidue(SL, x, r, NULL);
-    uint n = SL->n;
-
-    /*Criando a matriz d e c usados para calculos*/
-    double *v1 = malloc(n * sizeof(double));
-    memcpy(v1, r, n * sizeof(double)); 
-    struct Matrix d = {v1, n, 1, 0};
-
-    double *v2 = malloc(n * sizeof(double));
-    struct Matrix c = {v2, n, 1, 0};
-    
-    double* prevx = calloc(n, sizeof(double));
-    double cAd = 0.0; //dkt * Adk
-    double alpha; // ak
-    double deltaOld = 0.0;
-    double deltaNew = 0.0;
-    double beta = 0.0;
-    double tIter;
-    uint it = 1;
-    double totalTime = 0.0;
-    deltaOld = sqrVector(r, r, n); //Como rk * rkt eh o quadrado nao precisamos multplicar matrizes
-    do {
-        tIter = timestamp();
-        /*Calculando ak = rk * rkt / dkt * A * dk */
-        multMatrix(SL->A, &d, &c); //Precisamos multiplicar matrizes pois A e d nao sao quadrados
-       
-        //Fazemos a multiplicacao de matrizes manual, ja q n vou criar outro vetor
-        cAd = 0.0;
-        for (int i = 0; i < n; i++) 
-            cAd += c.v[i]*d.v[i];
-
-        alpha = deltaOld / cAd; //Calculando ak
-         
-        //printf("%f\n", alpha);
-       
-        deltaNew = 0.0;
-        for (uint i = 0; i < n; i++) {
-
-            prevx[i] = x[i];
-            /*Xk+1 = Xk + akdk*/
-            x[i] += alpha * d.v[i];
-            
-            //printf("%f - %d\n", x[i], i);
-            /*rk+1 = rk - akAdk*/
-            r[i] -= alpha * c.v[i];
-            deltaNew += r[i] * r[i];*time = timestamp();
-        }
-
-        beta = deltaNew / deltaOld;
-        for(uint i = 0; i < n; i++)
-            d.v[i] = r[i] + beta *d.v[i];
-
-        deltaOld = deltaNew;
-        *norma = calcNormaMax(x, prevx, n);
-        it++;
-        tIter = timestamp() - tIter;
-        totalTime +=tIter;
-    }while (it < maxit &&  *norma >= eps);
-    *time = totalTime/it;
-
-    free(v1);
-    free(v2);
-}
-
-void conjGradientPre(struct LinearSis *SL, double *x, double *norma, double *r, struct Matrix *M, uint maxit, double eps, double* time){
+int conjGradientPre(struct LinearSis *SL, double *x, double *norma, double *r, struct Matrix *M, uint maxit, double eps, double* time){
 
     calcResidue(SL, x, r, NULL);
     uint n = SL->n;
@@ -265,21 +195,19 @@ void conjGradientPre(struct LinearSis *SL, double *x, double *norma, double *r, 
         for (int i = 0; i < n; i++) 
             cAd += c.v[i]*d.v[i];
 
+        if(cAd == 0){
+            fprintf(stderr,"cAD Divisão por zero\n");
+            return -1;
+        }
         alpha = deltaOld / cAd; //Calculando ak
-        printf("alpha %f = deltaold %f / cAd %f\n", alpha, deltaOld,cAd);
          
         //printf("%f\n", alpha);
        
         deltaNew = 0.0;
         for (uint i = 0; i < n; i++) {
             prevx[i] = x[i];
-            printf("vet antes:\n");
-            printVetor(x,n);
             /*Xk+1 = Xk + akdk*/
             x[i] += alpha * d.v[i];
-            printf("vet depois:\n");
-            printVetor(x,n);
-            printf("\n\n");
             //printf("%f - %d\n", x[i], i);
             /*rk+1 = rk - akAdk*/
             r[i] -= alpha * c.v[i];
@@ -288,24 +216,28 @@ void conjGradientPre(struct LinearSis *SL, double *x, double *norma, double *r, 
             deltaNew += y.v[i] * r[i];
             valueNew += r[i] * r[i];
             norma[i] -= x[i];
-            printf("deltanew: %f\ny.v[%d]: %f\nr[%d]:%f\n",deltaNew,i,y.v[i],i,r[i]);
         }
 
-        printf("Bdeltanew %f\n", deltaNew);
+        if(deltaOld == 0){
+            fprintf(stderr,"DELTA Divisão por zero\n");
+            return -1;
+        }
         beta = deltaNew / deltaOld;
         for(uint i = 0; i < n; i++)
             d.v[i] = r[i] + beta *d.v[i];
 
-        printf("deltanew %f\n", deltaNew);
         deltaOld = deltaNew;
         it++;
         *norma = calcNormaMax(x, prevx, n); 
         tIter = timestamp() - tIter;
         printf("it:%d  maxit: %d\n", it, maxit);
-    }while (it < maxit && *norma >= eps); //ESSA VERIFICACAO DE COVNERGENCIA ESTA ERRADA, OLHAR ENUNCIADO
+    }while (it < maxit && *norma >= eps);
     *time = tIter/it;
+    free(prevx);
+    free(Yv);
     free(v1);
     free(v2);
+    return 0;
 }
 
 double calcNormaMax(double *x,double* y, int n){
@@ -316,7 +248,6 @@ double calcNormaMax(double *x,double* y, int n){
         if (max < aux)
             max = aux;
     }
-    printf("max: %f\n\n", max);
     return max;
 }
 
@@ -387,17 +318,3 @@ void multMatrix(struct Matrix *A, struct Matrix *B, struct Matrix *C) {
         }
     }
 }
-
-/*ME PARECE DESNECESSARIO, UTILIZAR A MULTIPLICACAO ENTRE MATRIZES JA  BASTA PARA MANTER SIMETRICA POSITIVA DEFINIDA, VER CGNE */
-/*void sumMatrix(struct Matrix *A, struct Matrix *B, struct Matrix *C) {
-    if(A->column != B->row)
-        return; 
-
-    uint n = A->column;
-
-    for (uint i = 0; i < A->row; i++) {
-        for (uint j = 0; j < B->column ; j++) {
-            C->v[i*n+j] = A->v[i*n+j] + B->v[i*n+j];
-        }
-    }
-}*/
