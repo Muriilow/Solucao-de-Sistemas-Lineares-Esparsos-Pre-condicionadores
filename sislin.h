@@ -45,7 +45,7 @@ void genDLU(struct Matrix* A, struct Matrix* D, struct Matrix* L, struct Matrix*
  * @param M: Matriz preCond
  * @param time: Variavel para calcular o tempo
  * */
-void genPreCond(struct Matrix *A, double w, int n, int k, struct Matrix *M, double *time);
+int genPreCond(struct Matrix *A, double w, int n, int k, struct Matrix *M, double *time);
 
 /*
  * Gera a transposta da Matriz

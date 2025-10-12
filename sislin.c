@@ -100,20 +100,18 @@ void genDLU(struct Matrix* A, struct Matrix* D, struct Matrix* L, struct Matrix*
 }
 
 /*Um pre condicionamento melhora um SL simetrico, positivo, definido e mal condicionado.*/
-void genPreCond(struct Matrix *A, double w, int n, int k,
+int genPreCond(struct Matrix *A, double w, int n, int k,
         struct Matrix *M, double *time)
 {   
     if (w == -1)
         for(int i = 0; i < M->row; i++){
             if(A->v[i*n + i] <= 0) { //Matriz nao positiva definida 
                 fprintf(stderr, "ERRO: A[%d][%d] = %.6f -> A não é definida positiva\n", i, i, A->v[i*n + i]);
-                return; 
+                return -2; 
             }
             else
-                M->v[i] = 1.0/A->v[i*n + i];
-            return;
+                M->v[i] = 1.0;
         }
-        
 
     /*
     PELO VISTO GERAR A DLU PODE SER IGNORADA (CASO SO FIZERMOS O METODO JACOBI)
@@ -133,7 +131,7 @@ void genPreCond(struct Matrix *A, double w, int n, int k,
         for(int i = 0; i < M->row; i++){
             if(A->v[i*n + i] <= 0) { //Matriz nao positiva definida 
                 fprintf(stderr, "ERRO: A[%d][%d] = %.6f -> A não é definida positiva\n", i, i, A->v[i*n + i]);
-                return; 
+                return -2; 
             }
             else
                 M->v[i] = 1.0/A->v[i*n + i];
@@ -141,6 +139,7 @@ void genPreCond(struct Matrix *A, double w, int n, int k,
     }
 
     *time = timestamp() - *time;
+    return 0;
 }
 
 void genTranspose(struct Matrix *A, struct Matrix *T)
@@ -162,9 +161,9 @@ int conjGradientPre(struct LinearSis *SL, double *x, double *norma, double *r, s
     double *Yv = malloc(n * sizeof(double)); 
     struct Matrix y = {Yv, 1, SL->n, 0};
     struct Matrix rMatrix = {r, 1, SL->n, 0};
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < n; i++){
         y.v[i] = M->v[i] * r[i]; // y = M^-1 * r
-
+    }
     /*Criando a matriz d e c usados para calculos*/
     double *v1 = calloc(n,sizeof(double));
     struct Matrix d = {v1, n, 1, 0};
@@ -200,11 +199,13 @@ int conjGradientPre(struct LinearSis *SL, double *x, double *norma, double *r, s
             return -1;
         }
         alpha = deltaOld / cAd; //Calculando ak
+
          
         //printf("%f\n", alpha);
        
         deltaNew = 0.0;
         for (uint i = 0; i < n; i++) {
+            
             prevx[i] = x[i];
             /*Xk+1 = Xk + akdk*/
             x[i] += alpha * d.v[i];
@@ -212,7 +213,6 @@ int conjGradientPre(struct LinearSis *SL, double *x, double *norma, double *r, s
             /*rk+1 = rk - akAdk*/
             r[i] -= alpha * c.v[i];
 
-            
             deltaNew += y.v[i] * r[i];
             valueNew += r[i] * r[i];
             norma[i] -= x[i];

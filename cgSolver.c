@@ -63,9 +63,9 @@ int main(){
     double *Mv = calloc(n, sizeof(double));
     struct Matrix M = {Mv, n, 1, SL.k};
 
-    genPreCond(SL.A, w, SL.n, SL.k, &M, &timeM);
-    status = conjGradientPre(&SL, X, r, norma, &M, maxit, eps, &timeGrad);
-    if (status == -1)
+    status = genPreCond(SL.A, w, SL.n, SL.k, &M, &timeM);
+    status += conjGradientPre(&SL, X, r, norma, &M, maxit, eps, &timeGrad);
+    if (status < -1)
         return -1;
     free(Mv);
     calcResidue(&SL, X, r, &timeRes);
