@@ -73,9 +73,11 @@ int main(){
     
     printf("output:\n%d\n",n);
     
-    double normaR = calcNormaEuclidiana(r, n);
+    
     printf("%.8g\n", *norma);
+    
     printVetor(X,n);
+    double normaR = calcNormaEuclidiana(r, n);
     printf("%.8g\n", normaR);
     printf("%.8g\n", timePC + timeM);
     printf("%.8g\n", timeGrad);

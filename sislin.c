@@ -205,7 +205,8 @@ int conjGradientPre(struct LinearSis *SL, double *x, double *norma, double *r, s
        
         deltaNew = 0.0;
         for (uint i = 0; i < n; i++) {
-            
+
+            norma[i] = x[i];
             prevx[i] = x[i];
             /*Xk+1 = Xk + akdk*/
             x[i] += alpha * d.v[i];
@@ -227,10 +228,14 @@ int conjGradientPre(struct LinearSis *SL, double *x, double *norma, double *r, s
             d.v[i] = r[i] + beta *d.v[i];
 
         deltaOld = deltaNew;
+        /*printf("vetor x: \n");
+        printVetor(x,n);
+        printf("vetor x anterior: \n");
+        printVetor(prevx,n);*/
         it++;
         *norma = calcNormaMax(x, prevx, n); 
         tIter = timestamp() - tIter;
-        printf("it:%d  maxit: %d\n", it, maxit);
+        printf("norma:%f > %f:eps \nit:%d  maxit: %d\n", *norma, eps, it, maxit);
     }while (it < maxit && *norma >= eps);
     *time = tIter/it;
     free(prevx);

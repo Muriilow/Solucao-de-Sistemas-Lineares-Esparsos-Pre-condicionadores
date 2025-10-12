@@ -112,5 +112,5 @@ void printSis(struct LinearSis *SL);
  * */
 void multMatrix(struct Matrix *A, struct Matrix *B, struct Matrix *C);
 
-#endif // __SISLIN_H__
+#endif // __SISLIN_H__;
 

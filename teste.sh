@@ -10,7 +10,7 @@ mkdir -p ${DATA_DIR}
 make purge
 make
 
-INPUTS=("SEM_1.in" "COM_1.in" "SEM_2.in" "COM_2.in" "SEM_3.in" "COM_3.in" "SEM_4.in" "COM_4.in" "SEM_5.in" "COM_5.in")
+INPUTS=("SEM_1.in" "COM_1.in" "SEM_2.in" "COM_2.in" "SEM_3.in" "COM_3.in" "SEM_4.in" "COM_4.in" "SEM_5.in" "COM_5.in" "SEM_6.in" "COM_6.in")
 
 for input_file in "${INPUTS[@]}"; do
     echo -e "$input_file"
