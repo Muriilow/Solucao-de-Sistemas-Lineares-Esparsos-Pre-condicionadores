@@ -53,8 +53,37 @@ n: Ordem da matriz
 k: Valor que define quantas diagonais não zero
 
 
-# Módulos
-    utils
-    sislin
+## Módulos
+
+### utils.h
+
+**MACROS**
+
+- #define ABS(num)  ((num) < 0.0 ? -(num) : (num))
+- #define numDigits(n)  6  // ( (int) log10(n) + 1 )
+- #define isPot2(n) (n && !(n & (n - 1)))
+
+**FUNÇÕES**
+
+- double timestamp(void);
+- char* markerName(char* baseName, int n);
+
+### sislin.h
+
+**FUNÇÕES**
+
+- void genKDiagonal(struct LinearSis *SL);
+- void genSymmetricPositive(struct LinearSis *SL, struct Matrix *ASP, struct Matrix *bsp, double *time);
+- int genPreCond(struct Matrix *A, double w, int n, int k, struct Matrix *M, double *time);
+- void genTranspose(struct Matrix *A, struct Matrix *AT);
+- int conjGradientPre(struct LinearSis *SL, double *x, double *r,double *norma, struct Matrix *M, uint maxit, double eps, double* time)
+- double calcNormaMax(double *x, double *y,int n);
+- double calcNormaEuclidiana(double *x, int n);
+- void calcResidue(struct LinearSis *SL, double *x, double *r, double* time);
+- void printVetor(double* vet, int n);
+- void printSis(struct LinearSis *SL);
+- void multMatrix(struct Matrix *A, struct Matrix *B, struct Matrix *C);
+
+
 
 
