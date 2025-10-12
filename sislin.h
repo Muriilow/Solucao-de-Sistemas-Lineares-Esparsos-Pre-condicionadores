@@ -65,7 +65,7 @@ void genTranspose(struct Matrix *A, struct Matrix *AT);
  * @param eps: Valor de parada
  * @param time: Variavel para calcular o tempo
  * */
-int conjGradientPre(struct LinearSis *SL, double *x, double *r, double *norma, struct Matrix *M, uint maxit, double eps, double* time);
+int conjGradientPre(struct LinearSis *SL, double *x, double *r,double *norma, struct Matrix *M, uint maxit, double eps, double* time);
 
 /*
  * Algoritmo que retorna a maior diferença entre os elementos de dois vetores de tamanho n

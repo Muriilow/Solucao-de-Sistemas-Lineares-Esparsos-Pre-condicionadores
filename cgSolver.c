@@ -23,7 +23,6 @@ int main(){
     scanf("%d", &maxit);
     scanf("%lf", &eps);
 
-    LIKWID_MARKER_START("INICIO");
     /*Criando o sistema Linear, A: Matriz, b: Vetor Indep*/
     double *av = malloc(n*n*sizeof(double));
     struct Matrix A = {av, n, n, k};
@@ -32,8 +31,8 @@ int main(){
     struct Matrix b = {bv, n, 1, 0};
 
     struct LinearSis SL = {&A, &b, n, k};
+    LIKWID_MARKER_START("PREP");
     genKDiagonal(&SL);
-    //printSis(&SL);
 
     /*Gerando simetrica positiva, criando Matriz A2, b2 para guardar os novos valores*/
     double *av1 = malloc(n*n*sizeof(double));
@@ -44,16 +43,17 @@ int main(){
     double timePC; //Arrumar esse time e os outros do trabalho
     genSymmetricPositive(&SL, &A2, &b2, &timePC); //TODO: TALVEZ FAZER UMA VERIFICACAAO PARA EVITAR EM MATRIZES MAL CONDICIONADAAS
 
+    LIKWID_MARKER_STOP("PREP");
     free(av);
     free(bv); //Liberando o vetor A e b pois nao preciso mais deles
     
     SL.A = &A2;
     SL.b = &b2; //Agora os valores a matriz e vetor independente sao simetricos
-    printSis(&SL);
+    //printSis(&SL);
 
     double* X = (double*) calloc(n, sizeof(double));
     double* r = (double*) malloc(n * sizeof(double));
-    double* norma = (double*) malloc(n * sizeof(double));
+    double* norma = (double*) malloc(sizeof(double));
     double timeM; 
     double timeGrad;
     double timeRes;
@@ -63,34 +63,35 @@ int main(){
     double *Mv = calloc(n, sizeof(double));
     struct Matrix M = {Mv, n, 1, SL.k};
 
+    LIKWID_MARKER_START("EXEC");
     status = genPreCond(SL.A, w, SL.n, SL.k, &M, &timeM);
-    status += conjGradientPre(&SL, X, r, norma, &M, maxit, eps, &timeGrad);
-    if (status < -1)
-        return -1;
+    status += conjGradientPre(&SL, X, r, norma,&M, maxit, eps, &timeGrad);
     free(Mv);
+     if (status < 0){
+        free(norma);
+        free(X);
+        free(av1);
+        free(bv1);
+        free(r);
+        return -1;
+    }
     calcResidue(&SL, X, r, &timeRes);
+    LIKWID_MARKER_STOP("EXEC");
     
-    
-    printf("output:\n%d\n",n);
-    
-    
-    printf("%.8g\n", *norma);
-    
+    printf("%d\n",n);
     printVetor(X,n);
     double normaR = calcNormaEuclidiana(r, n);
+    printf("%.8g\n", *norma);
     printf("%.8g\n", normaR);
     printf("%.8g\n", timePC + timeM);
     printf("%.8g\n", timeGrad);
     printf("%.8g\n", timeRes);
 
-
+    free(norma);
     free(X);
     free(av1);
     free(bv1);
-    free(norma);
     free(r); //Valgrind nao esta dando erro
-
-    LIKWID_MARKER_STOP("INICIO");
     LIKWID_MARKER_CLOSE;
     return 0;
 }

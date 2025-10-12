@@ -17,6 +17,9 @@ for input_file in "${INPUTS[@]}"; do
     output_file="${input_file%.*}.out"
     ./"$PROG" <  "$DATA_DIR""$input_file" > "$DATA_DIR""$output_file"
     echo -e ""
-
+    expected_file="${input_file%.*}"
+    diff "$DATA_DIR""$output_file" "$DATA_DIR""$expected_file"
+    echo -e ""
+    echo -e ""
 done
 

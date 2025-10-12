@@ -44,11 +44,10 @@ void genKDiagonal(struct LinearSis *SL){
         SL->b->v[i] = genRandomB(k);
 
         for(int j = 0; j < n; j++){
-            if ((j > i+k/2 || j < i - k/2)) {
+            if ((j > i + k/2 || j < i - k/2)) {
                 SL->A->v[n*i+j] = 0.0;
                 continue;
             }
-
             SL->A->v[n*i+j] = genRandomA(i,j,k);
         }
     }
@@ -113,19 +112,6 @@ int genPreCond(struct Matrix *A, double w, int n, int k,
                 M->v[i] = 1.0;
         }
 
-    /*
-    PELO VISTO GERAR A DLU PODE SER IGNORADA (CASO SO FIZERMOS O METODO JACOBI)
-    TEM QUE VER COM O PROFESSOR
-    double* dv = calloc(A->row*A->column, sizeof(double));
-    double* lv = calloc(A->row*A->column, sizeof(double));
-    double* uv = calloc(A->row*A->column, sizeof(double));
-    struct Matrix D = {dv, A->row, A->column, A->k};
-    struct Matrix L = {lv, A->row, A->column, A->k};
-    struct Matrix U = {uv, A->row, A->column, A->k};
-    double *DLUTime;
-
-    genDLU(A,&D,&L,&U,DLUTime); TODO: Consertar o ERRO */
-
     *time = timestamp();
     if (w == 0){
         for(int i = 0; i < M->row; i++){
@@ -152,7 +138,7 @@ void genTranspose(struct Matrix *A, struct Matrix *T)
             A->v[j*n+i] = T->v[i*n+j];
 }
 
-int conjGradientPre(struct LinearSis *SL, double *x, double *norma, double *r, struct Matrix *M, uint maxit, double eps, double* time){
+int conjGradientPre(struct LinearSis *SL, double *x, double *r,double *norma, struct Matrix *M, uint maxit, double eps, double *time){
 
     calcResidue(SL, x, r, NULL);
     uint n = SL->n;
@@ -170,12 +156,11 @@ int conjGradientPre(struct LinearSis *SL, double *x, double *norma, double *r, s
     for (int i = 0; i < n; i++)
         d.v[i] = M->v[i] * SL->b->v[i];
 
-    multMatrix(M, SL->b, &d); // v = M^-1 * b
-
     double *v2 = malloc(n * sizeof(double));
     struct Matrix c = {v2, n, 1, 0};
 
     double *prevx = calloc(n,sizeof(double));
+    double diff = 0.0;
     double cAd = 0.0; //dkt * Adk
     double alpha; // ak
     double deltaOld = 0.0;
@@ -195,28 +180,27 @@ int conjGradientPre(struct LinearSis *SL, double *x, double *norma, double *r, s
             cAd += c.v[i]*d.v[i];
 
         if(cAd == 0){
+            free(prevx);
+            free(Yv);
+            free(v1);
+            free(v2);
             fprintf(stderr,"cAD Divisão por zero\n");
             return -1;
         }
         alpha = deltaOld / cAd; //Calculando ak
-
-         
-        //printf("%f\n", alpha);
        
         deltaNew = 0.0;
         for (uint i = 0; i < n; i++) {
 
-            norma[i] = x[i];
             prevx[i] = x[i];
             /*Xk+1 = Xk + akdk*/
             x[i] += alpha * d.v[i];
-            //printf("%f - %d\n", x[i], i);
             /*rk+1 = rk - akAdk*/
             r[i] -= alpha * c.v[i];
+            y.v[i] = M->v[i] * r[i]; // y = M⁻¹ * r
 
             deltaNew += y.v[i] * r[i];
             valueNew += r[i] * r[i];
-            norma[i] -= x[i];
         }
 
         if(deltaOld == 0){
@@ -228,15 +212,13 @@ int conjGradientPre(struct LinearSis *SL, double *x, double *norma, double *r, s
             d.v[i] = r[i] + beta *d.v[i];
 
         deltaOld = deltaNew;
-        /*printf("vetor x: \n");
-        printVetor(x,n);
-        printf("vetor x anterior: \n");
-        printVetor(prevx,n);*/
+
         it++;
-        *norma = calcNormaMax(x, prevx, n); 
+        diff = calcNormaMax(x, prevx, n); 
         tIter = timestamp() - tIter;
-        printf("norma:%f > %f:eps \nit:%d  maxit: %d\n", *norma, eps, it, maxit);
-    }while (it < maxit && *norma >= eps);
+    }while (it < maxit && diff >= eps);
+    printf("it:%d\n",it);
+    *norma = diff;
     *time = tIter/it;
     free(prevx);
     free(Yv);
@@ -276,7 +258,6 @@ void calcResidue(struct LinearSis *SL, double *x, double *r, double *time)
             sum += SL->A->v[n*i + j] * x[j];
     
         r[i] = SL->b->v[i] - sum;
-        //printf("%f\n", r[i]);
     }
     if (time)
         *time = timestamp() - *time;
@@ -293,14 +274,13 @@ void printSis(struct LinearSis *SL){
 
     for (int i = 0; i < n; i++)
     {
-        printf("  [  ");
         for(int j = 0; j < n; j++){
             if (SL->A->v[i*n+j] == 0)
-                printf("            ");
+                printf("0 ");
             else
-                printf("%.4e  ", SL->A->v[i*n+j]);
+                printf("%.8f ", SL->A->v[i*n+j]);
         }
-        printf("]  [ %.4e ]\n", SL->b->v[i]);
+        printf("%.8f\n", SL->b->v[i]);
     }
 }
 /*ESSA FUNCAO MAIS GERAL FUNCIONA PARA MATRIZES E VETORES, MAS DEPENDE DE COMO O VETOR ESTA ORGANIZADO
@@ -319,7 +299,6 @@ void multMatrix(struct Matrix *A, struct Matrix *B, struct Matrix *C) {
             for (uint k = 0; k < A->column; k++)
                 sum += A->v[i*aSize + k] * B->v[k*bSize + j];
             C->v[i*bSize + j] = sum;
-            //printf("%f - C[%d]\n", C->v[i*bSize + j], i*bSize + j);
         }
     }
 }
