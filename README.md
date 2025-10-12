@@ -3,7 +3,7 @@
 Programa que utilizado o método dos Gradientes Conjugados para achar uma solução **x̄** dentro de uma certa tolerância **ε** ou limite de iterações **maxit**.
 
 ### Entradas: 
-lê da entrada padrão (stdin) 5 cinco valores:
+lê da entrada padrão cinco valores:
 
     n: (n>10)  a dimensão do Sistema Linear.
     k: (k>1 e k ímpar)  o número de diagonais da matriz A.
