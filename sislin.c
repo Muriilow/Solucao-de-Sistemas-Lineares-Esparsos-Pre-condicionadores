@@ -76,28 +76,6 @@ void genSymmetricPositive(struct LinearSis *SL, struct Matrix *ASP, struct Matri
     free(Atv);
 }
 
-//TODO: Deu erro ultima vez que usei, nao sei se eh a funcao ou a forma como coloquei 
-void genDLU(struct Matrix* A, struct Matrix* D, struct Matrix* L, struct Matrix* U, double *time)
-{
-    int n = A->row;
-    int k = A->k;
-    *time = timestamp();
-
-    for(int i = 0; i < n; i++){
-        for(int j = i-k/2; j < i+k/2; j++){
-            if(i < j)
-                L->v[i*n+j] = A->v[i*n+j];
-            else if(i == j)
-                D->v[i*n+j] = A->v[i*n+j];
-            else
-                U->v[i*n+j] = A->v[i*n+j];
-        }
-    }
-
-
-    *time = timestamp() - *time;
-}
-
 /*Um pre condicionamento melhora um SL simetrico, positivo, definido e mal condicionado.*/
 int genPreCond(struct Matrix *A, double w, int n, int k,
         struct Matrix *M, double *time)

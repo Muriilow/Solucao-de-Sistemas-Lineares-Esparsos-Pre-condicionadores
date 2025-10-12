@@ -27,16 +27,6 @@ void genKDiagonal(struct LinearSis *SL);
 void genSymmetricPositive(struct LinearSis *SL, struct Matrix *ASP, struct Matrix *bsp, double *time);
 
 /*
- * Gera duas matrizes triangulares e um vetor (D, L e U são matrizes de mesmo tamanho que A)
- * @param A: Matriz A que sera decomposta 
- * @param D: Vetor da diagonal principal
- * @param L: Matriz triangular "Lower"
- * @param U: Matriz triangular "Upper"
- * @param time: Variavel para calcular o tempo
- * */
-void genDLU(struct Matrix* A, struct Matrix* D, struct Matrix* L, struct Matrix* U, double *time);
-
-/*
  * Gera os pre condicionamentos dependendo do valor de w 
  * @param A: Matriz A que gerara os preCond
  * @param w: Valor que define qual tipo de pre condicionamento sera usado
