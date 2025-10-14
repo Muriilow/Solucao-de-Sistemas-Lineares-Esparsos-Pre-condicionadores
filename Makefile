@@ -10,7 +10,7 @@ SRCS = $(addsuffix .c,$(MODULES)) $(addsuffix .h,$(MODULES))
 
 # Lista de arquivos para distribuição
 DISTFILES = *.c *.h Makefile LEIAME
-DISTDIR = login1-login2
+DISTDIR = gvso24-mpb24
 
 .PHONY: clean purge dist all
 
