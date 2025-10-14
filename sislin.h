@@ -24,7 +24,7 @@ void genKDiagonal(struct LinearSis *SL);
  * @param bsp: Vetor b corrigido
  * @param Variavel para calcular o tempo
  * */
-void genSymmetricPositive(struct LinearSis *SL, struct Matrix *ASP, struct Matrix *bsp, double *time);
+int genSymmetricPositive(struct LinearSis *SL, struct Matrix *ASP, struct Matrix *bsp, double *time);
 
 /*
  * Gera os pre condicionamentos dependendo do valor de w 

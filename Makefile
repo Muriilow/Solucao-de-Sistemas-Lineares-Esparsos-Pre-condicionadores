@@ -1,7 +1,7 @@
 CC = gcc
 
-CFLAGS = -O0 -g -fopenmp -DLIKWID_PERFMON -L$LIKWID_LIB -I$LIKWID_INCLUDE
-LFLAGS = -lm -llikwid
+CFLAGS = -O0 -g
+LFLAGS = -lm
 
 PROG = cgSolver
 MODULES = utils	sislin utils $(PROG)
@@ -19,9 +19,6 @@ DISTDIR = login1-login2
 
 $(PROG):  $(OBJS)
 	$(CC) -g -o $@ $^ $(LFLAGS)
-
-debug:   CFLAGS+=-D__DEBUG__
-debug: $(PROG)
 
 clean:
 	@echo "Limpando sujeira ....."

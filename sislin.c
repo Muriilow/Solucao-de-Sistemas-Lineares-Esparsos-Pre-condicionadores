@@ -55,7 +55,7 @@ void genKDiagonal(struct LinearSis *SL){
 
 /* Gera matriz simetrica positiva. Isso pode ser ruim ou bom. A maneira que estamos usando (CGNE) pode piorar uma matriz mal condicionada. O OBJETIVO DESSA FUNCAO EH TRANSFORMAR UMA MATRIZ NAO SDP EM SDP, MAS CASO A MATRIZ SEJA MAL CONDICIONADA (NESSE CASO INDEPENDE DE SER OU NAO SIMETRICA E POSITIVA) ESSA FUNCAO IRA PIORAR EM MUITO A RESOLUCAO DA MATRIZ
  * PORTANTO, CHECAR COM O PROFESSOR SE EH NECESSARIO FAZER VERIFICACAO ANTES DE USAR A CGNE, PARA EVITAR ESSES PROBLEMAS*/
-void genSymmetricPositive(struct LinearSis *SL, struct Matrix *ASP, struct Matrix *bsp, double *time)
+int genSymmetricPositive(struct LinearSis *SL, struct Matrix *ASP, struct Matrix *bsp, double *time)
 {
     struct Matrix *A = SL->A;
     struct Matrix *b = SL->b;
@@ -64,6 +64,11 @@ void genSymmetricPositive(struct LinearSis *SL, struct Matrix *ASP, struct Matri
 
     double *Atv = malloc(A->row*A->column*sizeof(double));
     struct Matrix AT ={Atv, A->row, A->column, A->k};
+    if(!Atv){
+        free(Atv);
+        fprintf(stderr, "Falha na alocação de memória\n");
+        return -1;
+    }
 
     genTranspose(&AT, A);
     
@@ -74,6 +79,7 @@ void genSymmetricPositive(struct LinearSis *SL, struct Matrix *ASP, struct Matri
 
     *time = timestamp() - *time;
     free(Atv);
+    return 0;
 }
 
 /*Um pre condicionamento melhora um SL simetrico, positivo, definido e mal condicionado.*/
@@ -125,19 +131,35 @@ int conjGradientPre(struct LinearSis *SL, double *x, double *r,double *norma, st
     double *Yv = malloc(n * sizeof(double)); 
     struct Matrix y = {Yv, 1, SL->n, 0};
     struct Matrix rMatrix = {r, 1, SL->n, 0};
-    for (int i = 0; i < n; i++){
-        y.v[i] = M->v[i] * r[i]; // y = M^-1 * r
-    }
-    /*Criando a matriz d e c usados para calculos*/
+
+    
+    //Criando a matriz d e c usados para calculos
     double *v1 = calloc(n,sizeof(double));
     struct Matrix d = {v1, n, 1, 0};
-    for (int i = 0; i < n; i++)
-        d.v[i] = M->v[i] * SL->b->v[i];
-
     double *v2 = malloc(n * sizeof(double));
     struct Matrix c = {v2, n, 1, 0};
 
+    //vetor usado para comparação de norma
     double *prevx = calloc(n,sizeof(double));
+
+    if(!v1 || !Yv || !v2 || !prevx){
+        free(v1);
+        free(Yv);
+        free(v2);
+        free(prevx);
+        fprintf(stderr, "Falha na alocação de memória\n");
+        return -1;
+    }
+
+    // Y para calcular o SL com condicionador
+    for (int i = 0; i < n; i++)
+        y.v[i] = M->v[i] * r[i]; // y = M^-1 * r
+    //Criando a matriz d e c usados para calculos
+    for (int i = 0; i < n; i++)
+        d.v[i] = M->v[i] * SL->b->v[i];
+
+    
+
     double diff = 0.0;
     double cAd = 0.0; //dkt * Adk
     double alpha; // ak
@@ -195,7 +217,8 @@ int conjGradientPre(struct LinearSis *SL, double *x, double *r,double *norma, st
         diff = calcNormaMax(x, prevx, n); 
         tIter = timestamp() - tIter;
     }while (it < maxit && diff >= eps);
-    printf("it:%d\n",it);
+    fprintf(stderr,"diff: %f\n",diff);
+    fprintf(stderr,"it:%d\n",it);
     *norma = diff;
     *time = tIter/it;
     free(prevx);
