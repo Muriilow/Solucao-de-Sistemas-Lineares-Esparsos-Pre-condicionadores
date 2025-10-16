@@ -252,9 +252,10 @@ void calcResidue(struct LinearSis *SL, double *x, double *r, double *time)
     if (time)
         *time = timestamp();
     uint n = SL->n;
-    double sum = 0;
+    double sum = 0.0;
 
     for (uint i = 0; i < n; i++) {
+        sum = 0.0;
         for (uint j = 0; j < n; j++)
             sum += SL->A->v[n*i + j] * x[j];
     
@@ -275,13 +276,14 @@ void printSis(struct LinearSis *SL){
 
     for (int i = 0; i < n; i++)
     {
+        printf("[  ");
         for(int j = 0; j < n; j++){
             if (SL->A->v[i*n+j] == 0)
-                printf("0 ");
+                printf("            ");
             else
-                printf("%.8f ", SL->A->v[i*n+j]);
+                printf("%.8f  ", SL->A->v[i*n+j]);
         }
-        printf("%.8f\n", SL->b->v[i]);
+        printf("]   [ %.8f ]\n", SL->b->v[i]);
     }
 }
 /*ESSA FUNCAO MAIS GERAL FUNCIONA PARA MATRIZES E VETORES, MAS DEPENDE DE COMO O VETOR ESTA ORGANIZADO

@@ -35,6 +35,7 @@ int main(){
     struct LinearSis SL = {&A, &b, n, k};
     genKDiagonal(&SL);
 
+
     /*Gerando simetrica positiva, criando Matriz A2, b2 para guardar os novos valores*/
     double *av1 = malloc(n*n*sizeof(double));
     struct Matrix A2 = {av1, n, n, k};
@@ -104,7 +105,7 @@ int main(){
     calcResidue(&SL, X, r, &timeRes);
     
     printf("%d\n",n);
-    printVetor(X,n);
+    printVetor(X,n);;
     double normaR = calcNormaEuclidiana(r, n);
     printf("%.8g\n", *norma);
     printf("%.8g\n", normaR);
