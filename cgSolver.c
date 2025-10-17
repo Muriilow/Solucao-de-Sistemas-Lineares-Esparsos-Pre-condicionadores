@@ -52,7 +52,7 @@ int main(){
         fprintf(stderr, "Falha na alocação de memória\n");
         return -1;
     }
-    status = genSymmetricPositive(&SL, &A2, &b2, &timePC); //TODO: TALVEZ FAZER UMA VERIFICACAAO PARA EVITAR EM MATRIZES MAL CONDICIONADAAS
+    status = genSymmetricPositive(&SL, &A2, &b2, &timePC); 
 
     free(av);
     free(bv); //Liberando o vetor A e b pois nao preciso mais deles
@@ -65,7 +65,6 @@ int main(){
 
     SL.A = &A2;
     SL.b = &b2; //Agora os valores a matriz e vetor independente sao simetricos
-    //printSis(&SL);
 
     double* X = (double*) calloc(n, sizeof(double));
     double* r = (double*) malloc(n * sizeof(double));
@@ -73,9 +72,6 @@ int main(){
     double timeM; 
     double timeGrad;
     double timeRes;
-    //TODO: Fazer uma checagem para w
-    //(nao comparar igualdade com valores ponto flutuante, fazer uma margem)
-    
     double *Mv = calloc(n, sizeof(double));
     struct Matrix M = {Mv, n, 1, SL.k};
 
@@ -94,7 +90,7 @@ int main(){
     status = genPreCond(SL.A, w, SL.n, SL.k, &M, &timeM);
     status += conjGradientPre(&SL, X, r, norma,&M, maxit, eps, &timeGrad);
     free(Mv);
-     if (status < 0){
+    if (status < 0){
         free(norma);
         free(X);
         free(av1);
@@ -102,6 +98,7 @@ int main(){
         free(r);
         return -1;
     }
+
     calcResidue(&SL, X, r, &timeRes);
     
     printf("%d\n",n);
@@ -117,6 +114,7 @@ int main(){
     free(X);
     free(av1);
     free(bv1);
-    free(r); //Valgrind nao esta dando erro
+    free(r);
+    
     return 0;
 }

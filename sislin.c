@@ -5,9 +5,6 @@
 
 #include "sislin.h"
 
-/*TODO: DEVEMOS VERIFICAR DIVISAO POR ZERO NAS FUNCOES 
- NO ENUNCIADO BASTA UMA SIMPLES PRINT DE AVISO E RETORNAR O MAIN COM != 0 */
-
 /**
  * Função que gera os coeficientes de um sistema linear k-diagonal
  * @param i,j coordenadas do elemento a ser calculado (0<=i,j<n)
@@ -53,8 +50,6 @@ void genKDiagonal(struct LinearSis *SL){
     }
 }
 
-/* Gera matriz simetrica positiva. Isso pode ser ruim ou bom. A maneira que estamos usando (CGNE) pode piorar uma matriz mal condicionada. O OBJETIVO DESSA FUNCAO EH TRANSFORMAR UMA MATRIZ NAO SDP EM SDP, MAS CASO A MATRIZ SEJA MAL CONDICIONADA (NESSE CASO INDEPENDE DE SER OU NAO SIMETRICA E POSITIVA) ESSA FUNCAO IRA PIORAR EM MUITO A RESOLUCAO DA MATRIZ
- * PORTANTO, CHECAR COM O PROFESSOR SE EH NECESSARIO FAZER VERIFICACAO ANTES DE USAR A CGNE, PARA EVITAR ESSES PROBLEMAS*/
 int genSymmetricPositive(struct LinearSis *SL, struct Matrix *ASP, struct Matrix *bsp, double *time)
 {
     struct Matrix *A = SL->A;
@@ -72,8 +67,6 @@ int genSymmetricPositive(struct LinearSis *SL, struct Matrix *ASP, struct Matrix
 
     genTranspose(&AT, A);
     
-    //ESSE CALCULO EH O MESMO QUE ELEVAR O QUADRADO DE TODOS OS ELEMENTOS DE A
-    //CASO ACHE INTERESSANTE FAZER UMA FUNCAO QUE FAZ SO ISSO SERIA MENOS CUSTOSO ACREDITO EU.
     multMatrix(A, &AT, ASP);
     multMatrix(&AT, b, bsp);
 
@@ -154,6 +147,7 @@ int conjGradientPre(struct LinearSis *SL, double *x, double *r,double *norma, st
     // Y para calcular o SL com condicionador
     for (int i = 0; i < n; i++)
         y.v[i] = M->v[i] * r[i]; // y = M^-1 * r
+
     //Criando a matriz d e c usados para calculos
     for (int i = 0; i < n; i++)
         d.v[i] = M->v[i] * SL->b->v[i];
@@ -170,6 +164,7 @@ int conjGradientPre(struct LinearSis *SL, double *x, double *r,double *norma, st
     double tIter = timestamp();
     uint it = 1;
     deltaOld = sqrVector(r, y.v, n); //Como rk * rkt eh o quadrado nao precisamos multplicar matrizes
+
     do {
         /*Calculando ak = rk * rkt / dkt * A * dk */
         multMatrix(SL->A, &d, &c); //Precisamos multiplicar matrizes pois A e d nao sao quadrados
@@ -217,20 +212,25 @@ int conjGradientPre(struct LinearSis *SL, double *x, double *r,double *norma, st
         diff = calcNormaMax(x, prevx, n); 
         tIter = timestamp() - tIter;
     }while (it < maxit && diff >= eps);
+
     fprintf(stderr,"diff: %f\n",diff);
     fprintf(stderr,"it:%d\n",it);
+
     *norma = diff;
     *time = tIter/it;
+
     free(prevx);
     free(Yv);
     free(v1);
     free(v2);
+
     return 0;
 }
 
 double calcNormaMax(double *x,double* y, int n){
     double max = 0.0;
     double aux = 0.0;
+
     for (int i = 0; i < n; i++){
         aux = fabs(x[i] - y[i]);
         if (max < aux)
@@ -241,9 +241,11 @@ double calcNormaMax(double *x,double* y, int n){
 
 double calcNormaEuclidiana(double *x, int n){
     double aux = 0.0;
+
     for (int i = 0; i < n; i++){
         aux += x[i]*x[i];
     }
+
     return sqrt(aux);
 }
 
@@ -251,6 +253,7 @@ void calcResidue(struct LinearSis *SL, double *x, double *r, double *time)
 {
     if (time)
         *time = timestamp();
+
     uint n = SL->n;
     double sum = 0.0;
 
@@ -269,6 +272,7 @@ void printVetor(double* vet, int n){
     for(int i = 0; i < n; i++){
         printf("%.16g   ", vet[i]);
     }
+
     printf("\n");
 }
 void printSis(struct LinearSis *SL){
@@ -286,8 +290,7 @@ void printSis(struct LinearSis *SL){
         printf("]   [ %.8f ]\n", SL->b->v[i]);
     }
 }
-/*ESSA FUNCAO MAIS GERAL FUNCIONA PARA MATRIZES E VETORES, MAS DEPENDE DE COMO O VETOR ESTA ORGANIZADO
- * UM VETOR LINHA PODE CAUSAR PROBLEMAS ONDE UM VETOR COLUNA NAO, FAZER UMA MULT ENTRE MATRIZ E VETOR SERIA MAIS SEGURO*/
+/*ESSA FUNCAO MAIS GERAL FUNCIONA PARA MATRIZES E VETORES, MAS DEPENDE DE COMO O VETOR ESTA ORGANIZADO */
 void multMatrix(struct Matrix *A, struct Matrix *B, struct Matrix *C) {
     if(A->column != B->row)
         return; 
