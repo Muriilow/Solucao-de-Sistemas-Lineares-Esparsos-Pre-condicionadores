@@ -3,7 +3,7 @@
 Programa que utilizado o método dos Gradientes Conjugados para achar uma solução **x̄** dentro de uma certa tolerância **ε** ou limite de iterações **maxit**.
 
 ### Entradas: 
-lê da entrada padrão cinco valores:
+Lê da entrada padrão cinco valores:
 
     n: (n>10)  a dimensão do Sistema Linear.
     k: (k>1 e k ímpar)  o número de diagonais da matriz A.
@@ -18,7 +18,7 @@ lê da entrada padrão cinco valores:
 
 ## Autoria
 Guilherme Vitoriano Santana de OLiveira - GRR20245396  
-Murilo de Paula Bob - GRR2024
+Murilo de Paula Bob - GRR20242184
 
 ## Estruturas de Dados:
 
@@ -34,11 +34,12 @@ struct Matrix {
 ```
    
 > v: Matriz diagonal  
-row: Quantidade de linhas   
-column: Quantidade de coluna  
-k: Quatidade de diagonais da matriz, 0 para matriz não diagonal
+> row: Quantidade de linhas   
+> column: Quantidade de coluna  
+> k: Quatidade de diagonais da matriz, 0 para matriz não diagonal
 
- Struct que define um sistema Linear:
+Struct que define um sistema Linear:
+
 ```
 struct LinearSis {
     struct Matrix *A;
@@ -46,11 +47,12 @@ struct LinearSis {
     uint n; 
     uint k; 
 };
+
 ```
 > A: Matriz k-diagonal  
-b: Vetor de valores independentes do sistema  
-n: Ordem da matriz  
-k: Valor que define quantas diagonais não zero
+> b: Vetor de valores independentes do sistema  
+> n: Ordem da matriz  
+> k: Valor que define quantas diagonais não zero
 
 
 ## Módulos
